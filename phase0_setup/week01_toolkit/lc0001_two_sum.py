@@ -1,5 +1,6 @@
 """
 LC 1 · Two Sum · Easy
+Link: https://leetcode.com/problems/two-sum/
 Pattern: Hash map of complements (value -> index), one pass
 Approach: Walk the list once. For each number, its complement is target - num.
           If the complement is already in the dict, return [its index, current index].

@@ -1,5 +1,6 @@
 """
 LC 217 · Contains Duplicate · Easy
+Link: https://leetcode.com/problems/contains-duplicate/
 Pattern: Hash set for seen-before lookup
 Approach: Walk the list keeping a set of numbers already seen. If the current
           number is already in the set, it's a duplicate, so return True right away.

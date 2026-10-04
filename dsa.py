@@ -33,6 +33,8 @@ PROGRESS = ROOT / "progress"
 LOG_FILE = PROGRESS / "log.csv"
 STATE_FILE = PROGRESS / "state.json"
 JOURNAL_FILE = PROGRESS / "journal.md"
+TRACKER_FILE = PROGRESS / "tracker.csv"  # feeds the Google Sheet via IMPORTDATA
+REPO_URL = "https://github.com/Harsh251005/data-structures-and-algorithms"
 FIELDS = ["date", "kind", "pid", "name", "diff", "hints", "mins", "xp", "note"]
 
 # ── Rules (mirrors ROADMAP.md §2) ─────────────────────────────────────────────
@@ -380,6 +382,7 @@ def dashboard() -> None:
 # ── Commands ──────────────────────────────────────────────────────────────────
 def celebrate(rows_before: list[dict], gained: int, today: date) -> None:
     rows_after = load_log()
+    write_tracker(rows_after)
     before_idx, _ = level_for(total_xp(rows_before))
     after_idx, (_, icon, title) = level_for(total_xp(rows_after))
     print(c(f"   +{gained} XP", BOLD, GOLD) + c(f"   ·   total {total_xp(rows_after):,} XP", GREY))
@@ -456,6 +459,7 @@ def cmd_undo(_args) -> None:
         sys.exit(c("Nothing to undo.", GREY))
     last = rows.pop()
     rewrite_log(rows)
+    write_tracker()
     print(c(f"   removed: {last['date']} {last['kind']} {last['pid']} {last['name']} ({last['xp']} XP)", GREY))
 
 
@@ -500,8 +504,76 @@ def find_problem_name(pid: str) -> str | None:
     return None
 
 
+def solution_file(pid: str) -> Path | None:
+    pattern = f"lc{int(pid):04d}_*.py" if pid.isdigit() else f"lc{slugify(pid)}_*.py"
+    return next(iter(sorted(ROOT.glob(f"phase*/**/{pattern}"))), None)
+
+
+def docstring_fields(path: Path) -> dict[str, str]:
+    """Parse 'Key: value' lines (with indented continuation lines) from a solution's docstring."""
+    text = path.read_text()
+    match = re.match(r'\s*"""(.*?)"""', text, re.S)
+    fields: dict[str, str] = {}
+    key = None
+    for line in (match.group(1) if match else "").splitlines():
+        head = re.match(r"^([A-Z][A-Za-z ]+?):\s*(.*)$", line)
+        if head and not line.startswith(" "):
+            key = head.group(1)
+            fields[key] = head.group(2).strip()
+        elif key and line.strip():
+            fields[key] += " " + line.strip()
+    return fields
+
+
+def topic_for(path: Path) -> str:
+    rel = str(path.relative_to(ROOT).parent)
+    return next((topic for folder, topic in CURRICULUM.values() if folder == rel), rel)
+
+
+TRACKER_COLUMNS = ["#", "Date", "LC #", "Problem", "Difficulty", "Topic", "Pattern", "Minutes", "Hints",
+                   "Clean solve", "XP", "Re-solves done", "Next re-solve", "Mastered", "Key insight",
+                   "LeetCode", "Solution"]
+
+
+def write_tracker(rows: list[dict] | None = None) -> None:
+    """One row per problem, rebuilt from log.csv and the solution docstrings. Never edit the CSV by hand."""
+    rows = load_log() if rows is None else rows
+    resolves: dict[str, list[dict]] = {}
+    for r in rows:
+        if r["kind"] == "resolve":
+            resolves.setdefault(r["pid"], []).append(r)
+    out = []
+    solves = [r for r in rows if r["kind"] == "solve"]
+    for n, r in enumerate(solves, 1):
+        path = solution_file(r["pid"])
+        f = docstring_fields(path) if path else {}
+        done = len(resolves.get(r["pid"], []))
+        nxt = (r["day"] + timedelta(days=RESOLVE_AFTER_DAYS[done])).isoformat() if done < len(RESOLVE_AFTER_DAYS) else ""
+        out.append({
+            "#": n, "Date": r["date"], "LC #": r["pid"], "Problem": r["name"],
+            "Difficulty": {"E": "Easy", "M": "Medium", "H": "Hard"}.get(r["diff"], r["diff"]),
+            "Topic": topic_for(path) if path else "", "Pattern": f.get("Pattern", ""),
+            "Minutes": r["mins"], "Hints": r["hints"], "Clean solve": "Yes" if r["hints"] in ("0", 0) else "No",
+            "XP": r["xp"], "Re-solves done": f"{done}/{len(RESOLVE_AFTER_DAYS)}", "Next re-solve": nxt,
+            "Mastered": "Yes" if done >= len(RESOLVE_AFTER_DAYS) else "No",
+            "Key insight": f.get("Key insight", ""), "LeetCode": f.get("Link", ""),
+            "Solution": f"{REPO_URL}/blob/main/{path.relative_to(ROOT).as_posix()}" if path else "",
+        })
+    PROGRESS.mkdir(parents=True, exist_ok=True)
+    with TRACKER_FILE.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=TRACKER_COLUMNS)
+        writer.writeheader()
+        writer.writerows(out)
+
+
+def cmd_export(_args) -> None:
+    write_tracker()
+    print(c(f"   ⇪ {TRACKER_FILE.relative_to(ROOT)} rebuilt", GREEN))
+
+
 SOLUTION_TEMPLATE = '''"""
 LC {pid} · {name} · {difficulty}
+Link: https://leetcode.com/problems/{slug}/
 Pattern:
 Approach:
 Time: O(?)   Space: O(?)
@@ -533,7 +605,8 @@ def cmd_new(args) -> None:
         sys.exit(c(f"already exists: {target.relative_to(ROOT)}", GOLD))
     target.parent.mkdir(parents=True, exist_ok=True)
     full = {"E": "Easy", "M": "Medium", "H": "Hard"}[diff]
-    target.write_text(SOLUTION_TEMPLATE.format(pid=pid, name=args.name, difficulty=full))
+    slug = re.sub(r"[^a-z0-9 -]", "", args.name.lower()).strip().replace(" ", "-")
+    target.write_text(SOLUTION_TEMPLATE.format(pid=pid, name=args.name, difficulty=full, slug=re.sub(r"-+", "-", slug)))
     print(f"   {c('✚', BOLD, GREEN)} created {c(str(target.relative_to(ROOT)), BOLD)}")
     print(c(f"   when solved: python dsa.py log {pid} {diff} --mins <n> --hints <n>", GREY))
 
@@ -579,6 +652,9 @@ def main() -> None:
     p = sub.add_parser("target", help="show or set the daily new-problem target")
     p.add_argument("n", nargs="?", type=int)
     p.set_defaults(fn=cmd_target)
+
+    p = sub.add_parser("export", help="rebuild progress/tracker.csv (the Google Sheet's source)")
+    p.set_defaults(fn=cmd_export)
 
     p = sub.add_parser("undo", help="remove the last log entry")
     p.set_defaults(fn=cmd_undo)
