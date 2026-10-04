@@ -10,6 +10,7 @@ DSA Forge: your daily DSA progress tracker.
                                                     create a solution file in this week's folder
     python dsa.py journal "forgot the empty-array case"
     python dsa.py week [next | <n>]                 show / move the current roadmap week
+    python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves)
     python dsa.py undo                              remove the last log entry
 
 Standard library only. Data lives in progress/ (log.csv, state.json, journal.md).
@@ -40,6 +41,7 @@ XP_NO_HINTS = 5
 XP_RESOLVE = 5
 XP_EVENT = {"mock": 40, "promotion": 100}
 RESOLVE_AFTER_DAYS = (3, 7, 21)
+DEFAULT_DAILY_TARGET = 2  # new problems per day, plus every re-solve that's due
 
 LEVELS = [  # (min xp, icon, title)
     (0, "🎓", "Intern"),
@@ -237,6 +239,23 @@ def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
     return sorted(due), sorted(upcoming)
 
 
+def daily_progress(rows: list[dict], today: date, target: int) -> tuple[int, int, bool]:
+    """(new problems solved today, re-solves still due, target met). Met = target new solves + empty re-solve queue."""
+    new_today = sum(1 for r in rows if r["kind"] == "solve" and r["day"] == today)
+    due, _ = resolve_queue(rows, today)
+    return new_today, len(due), new_today >= target and not due
+
+
+def target_line(rows: list[dict], today: date, target: int) -> str:
+    new_today, due_left, met = daily_progress(rows, today, target)
+    if met:
+        return c("🎯 Daily target hit. ", BOLD, GREEN) + c("Anything more is bonus. Stopping here is a win too.", GREEN)
+    parts = [f"{min(new_today, target)}/{target} new"]
+    if due_left:
+        parts.append(f"{due_left} re-solve{'s' if due_left != 1 else ''} due")
+    return c("🎯 Today's target: ", BOLD, GOLD) + c("  ·  ".join(parts), CREAM)
+
+
 def week_info(week: int) -> tuple[str, str]:
     return CURRICULUM.get(week, INTERVIEW_MODE)
 
@@ -310,6 +329,13 @@ def dashboard() -> None:
         print("   " + c("Minimum viable day: one re-solve or one easy problem keeps it alive.", GREY))
     print()
 
+    # Today's target
+    target = state.get("daily_target", DEFAULT_DAILY_TARGET)
+    new_today, _, met = daily_progress(rows, today, target)
+    print("  " + rule("today's target"))
+    print(f"   {bar(min(1.0, new_today / target), width=20)}  " + target_line(rows, today, target))
+    print()
+
     # This week
     print("  " + rule("this week"))
     print(f"   Week {c(str(state['week']), BOLD, GOLD)} · {c(topic, BOLD)}")
@@ -368,6 +394,8 @@ def celebrate(rows_before: list[dict], gained: int, today: date) -> None:
         if current in STREAK_MILESTONES:
             msg += c(f"  ·  {current}-day milestone. This is what consistency looks like.", BOLD, SAFFRON)
         print("   " + msg)
+    target = load_state().get("daily_target", DEFAULT_DAILY_TARGET)
+    print("   " + target_line(rows_after, today, target))
     print()
 
 
@@ -449,6 +477,14 @@ def cmd_week(args) -> None:
     save_state(state)
     folder, topic = week_info(state["week"])
     print(f"   Week {c(str(state['week']), BOLD, GOLD)} · {c(topic, BOLD)}  {c(folder + '/', GREY)}")
+
+
+def cmd_target(args) -> None:
+    state = load_state()
+    if args.n:
+        state["daily_target"] = max(1, args.n)
+        save_state(state)
+    print(f"   🎯 Daily target: {c(str(state.get('daily_target', DEFAULT_DAILY_TARGET)), BOLD, GOLD)} new problems + all due re-solves")
 
 
 def slugify(text: str) -> str:
@@ -539,6 +575,10 @@ def main() -> None:
     p = sub.add_parser("week", help="show or set the current roadmap week")
     p.add_argument("value", nargs="?", help="'next' or a week number")
     p.set_defaults(fn=cmd_week)
+
+    p = sub.add_parser("target", help="show or set the daily new-problem target")
+    p.add_argument("n", nargs="?", type=int)
+    p.set_defaults(fn=cmd_target)
 
     p = sub.add_parser("undo", help="remove the last log entry")
     p.set_defaults(fn=cmd_undo)

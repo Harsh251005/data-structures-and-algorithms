@@ -17,6 +17,7 @@ python dsa.py log 1 E --mins 18 --hints 0       # log a solve
 python dsa.py resolve 1                         # spaced re-solve (days 3, 7, 21)
 python dsa.py journal "forgot the empty input"  # one-line journal
 python dsa.py week next                         # move to the next roadmap week
+python dsa.py target 3                          # change the daily target (default: 2 new + due re-solves)
 ```
 
 Standard library only, so there's nothing to install.
