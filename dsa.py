@@ -554,7 +554,7 @@ def write_tracker(rows: list[dict] | None = None) -> None:
             "Difficulty": {"E": "Easy", "M": "Medium", "H": "Hard"}.get(r["diff"], r["diff"]),
             "Topic": topic_for(path) if path else "", "Pattern": f.get("Pattern", ""),
             "Minutes": r["mins"], "Hints": r["hints"], "Clean solve": "Yes" if r["hints"] in ("0", 0) else "No",
-            "XP": r["xp"], "Re-solves done": f"{done}/{len(RESOLVE_AFTER_DAYS)}", "Next re-solve": nxt,
+            "XP": r["xp"], "Re-solves done": f"{done} of {len(RESOLVE_AFTER_DAYS)}", "Next re-solve": nxt,
             "Mastered": "Yes" if done >= len(RESOLVE_AFTER_DAYS) else "No",
             "Key insight": f.get("Key insight", ""), "LeetCode": f.get("Link", ""),
             "Solution": f"{REPO_URL}/blob/main/{path.relative_to(ROOT).as_posix()}" if path else "",
