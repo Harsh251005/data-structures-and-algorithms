@@ -24,7 +24,7 @@ class Solution:
                     return [i, j]
         return []
 
-    def twoSum(self, nums: list[int], target: int):
+    def twoSum(self, nums: list[int], target: int) -> list[int]:
         positions = {}
 
         for i in range(len(nums)):
