@@ -12,6 +12,7 @@ DSA Forge: your daily DSA progress tracker.
     python dsa.py journal "forgot the empty-array case"
     python dsa.py week [next | <n>]                 show / move the current roadmap week
     python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves)
+    python dsa.py check 121                         count your own tests (log needs 3)
     python dsa.py undo                              remove the last log entry
 
 Standard library only. Data lives in progress/ (log.csv, state.json, journal.md).
@@ -47,6 +48,7 @@ RESOLVE_AFTER_DAYS = (3, 7, 21)
 VIEWED_RESOLVE_AFTER_DAYS = (1, 3, 7, 21)  # solution was viewed: re-solve cold the next day first
 VIEWED_TAG = "[viewed]"
 DEFAULT_DAILY_TARGET = 2  # new problems per day, plus every re-solve that's due
+MIN_OWN_TESTS = 3  # `log` refuses until the solution file has this many tests not marked "added in review"
 
 LEVELS = [  # (min xp, icon, title)
     (0, "🎓", "Intern"),
@@ -267,6 +269,18 @@ def target_line(rows: list[dict], today: date, target: int) -> str:
     return c("🎯 Today's target: ", BOLD, GOLD) + c("  ·  ".join(parts), CREAM)
 
 
+def gauntlet_line(rows: list[dict], today: date) -> str:
+    """Friday Gauntlet: 2 cold re-solves of this week's problems, no hints, logged as `event mock`.
+    Shown Friday to Sunday until it's done that week."""
+    monday = today - timedelta(days=today.weekday())
+    done = any(r["kind"] == "mock" and r["day"] >= monday for r in rows)
+    if done:
+        return c("⚔  Friday Gauntlet cleared this week ✔", GREEN) if today.weekday() >= 4 else ""
+    if today.weekday() < 4:
+        return ""
+    return c("⚔  Friday Gauntlet due: 2 cold re-solves from this week, no hints → python dsa.py event mock", BOLD, GOLD)
+
+
 def week_info(week: int) -> tuple[str, str]:
     return CURRICULUM.get(week, INTERVIEW_MODE)
 
@@ -345,6 +359,9 @@ def dashboard() -> None:
     new_today, _, met = daily_progress(rows, today, target)
     print("  " + rule("today's target"))
     print(f"   {bar(min(1.0, new_today / target), width=20)}  " + target_line(rows, today, target))
+    gauntlet = gauntlet_line(rows, today)
+    if gauntlet:
+        print("   " + gauntlet)
     print()
 
     # This week
@@ -369,10 +386,11 @@ def dashboard() -> None:
     # Re-solve queue
     print("  " + rule("re-solve queue"))
     if due:
+        totals = {r["pid"]: len(schedule_for(r)) for r in rows if r["kind"] == "solve"}
         for when, pid, name, stage in due[:6]:
             late = (today - when).days
             tag = c("due today", GOLD) if late == 0 else c(f"{late}d overdue", RED)
-            print(f"   {c('↻', SAFFRON)} LC {pid:<5} {name[:34]:<34} {c(f'round {stage}/3', GREY)}  {tag}")
+            print(f"   {c('↻', SAFFRON)} LC {pid:<5} {name[:34]:<34} {c(f'round {stage}/{totals.get(pid, 3)}', GREY)}  {tag}")
         if len(due) > 6:
             print(c(f"   … and {len(due) - 6} more", GREY))
     else:
@@ -424,6 +442,12 @@ def cmd_log(args) -> None:
     if any(r["kind"] == "solve" and r["pid"] == pid for r in rows):
         sys.exit(c(f"LC {pid} is already logged as solved. Use: python dsa.py resolve {pid}", GOLD))
     diff = normalize_diff(args.diff)
+    path = solution_file(pid)
+    own = own_test_count(path) if path else 0
+    if own < MIN_OWN_TESTS:
+        where = path.name if path else "no solution file found"
+        sys.exit(c(f"LC {pid} ({where}) has {own} test(s) of your own, need {MIN_OWN_TESTS}. "
+                   "Write the missing ones yourself; cases marked 'added in review' don't count.", GOLD))
     xp = XP_SOLVE[diff] + (XP_NO_HINTS if args.hints == 0 else 0)
     name = args.name or find_problem_name(pid) or ""
     note = args.note or ""
@@ -467,6 +491,17 @@ def cmd_event(args) -> None:
     label = "Mock interview done" if args.kind == "mock" else "Promotion review PASSED"
     print(f"   {c('◆', BOLD, CYAN)} {c(label, BOLD)}")
     celebrate(rows, xp, date.today())
+
+
+def cmd_check(args) -> None:
+    path = solution_file(str(args.pid))
+    if not path:
+        sys.exit(c(f"No solution file for LC {args.pid}.", GOLD))
+    own = own_test_count(path)
+    ok = own >= MIN_OWN_TESTS
+    print(c(f"   {'✔' if ok else '✘'} LC {args.pid}: {own} test(s) of your own (need {MIN_OWN_TESTS})", BOLD, GREEN if ok else RED))
+    if not ok:
+        sys.exit(1)
 
 
 def cmd_undo(_args) -> None:
@@ -523,6 +558,26 @@ def find_problem_name(pid: str) -> str | None:
 def solution_file(pid: str) -> Path | None:
     pattern = f"lc{int(pid):04d}_*.py" if pid.isdigit() else f"lc{slugify(pid)}_*.py"
     return next(iter(sorted(ROOT.glob(f"phase*/**/{pattern}"))), None)
+
+
+def own_test_count(path: Path) -> int:
+    """Tests Harsh wrote himself: case rows like `([1, 2], 3),` or asserts against a literal
+    (`assert s.f(x) == 5`), in the __main__ block, excluding lines marked "added in review"."""
+    text = path.read_text()
+    main = text.split('if __name__ == "__main__":', 1)[1] if 'if __name__ == "__main__":' in text else ""
+    count = 0
+    for line in main.splitlines():
+        if "added in review" in line:
+            continue
+        code = line.split("#", 1)[0].strip()
+        if re.match(r"[\(\[].*[\)\]],?$", code):
+            count += 1
+        elif code.startswith("assert "):
+            expr = re.sub(r",\s*f?[\"'].*$", "", code[len("assert "):])  # drop the failure message
+            # a literal input or expected value, not just names (`assert got == expected` is a loop check)
+            if re.search(r"(?<![\w\]\)])\[|\b\d|[\"']|\b(True|False|None)\b", expr):
+                count += 1
+    return count
 
 
 def docstring_fields(path: Path) -> dict[str, str]:
@@ -672,6 +727,10 @@ def main() -> None:
 
     p = sub.add_parser("export", help="rebuild progress/tracker.csv (the Google Sheet's source)")
     p.set_defaults(fn=cmd_export)
+
+    p = sub.add_parser("check", help="count your own tests in a solution file (the log gate)")
+    p.add_argument("pid")
+    p.set_defaults(fn=cmd_check)
 
     p = sub.add_parser("undo", help="remove the last log entry")
     p.set_defaults(fn=cmd_undo)

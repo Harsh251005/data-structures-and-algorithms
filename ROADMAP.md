@@ -66,7 +66,7 @@ After a viewed solution you type it from memory, it is logged with `--viewed`, a
 | 🏛️ Staff Engineer | 6,000 | Phase 6 + Interview mode |
 | 👑 Principal | 9,000 | You're interview-ready |
 
-**XP:** Easy 10 · Medium 25 · Hard 60 · Solved with no hints +5 · Spaced re-solve 5 · Weekly mock 40 · Promotion review passed 100
+**XP:** Easy 10 · Medium 25 · Hard 60 · Solved with no hints +5 · Spaced re-solve 5 · Friday Gauntlet / weekly mock 40 · Promotion review passed 100
 
 ### Promotion reviews (boss fights)
 At the end of each phase you get a **timed assessment**: 3 unseen problems in 90 minutes, with me as the interviewer. You don't see the problems in advance. Pass 2 of 3 to get promoted. Fail, and you get a targeted 3-day revision sprint, then a retry.
@@ -74,7 +74,9 @@ At the end of each phase you get a **timed assessment**: 3 unseen problems in 90
 ### Streak rules
 - **Minimum viable day:** on a bad day, **one re-solve or one easy problem (about 20 minutes)** keeps the streak alive. Showing up counts for more than the score.
 - **Never miss twice.** Missing one day is life. Missing two days in a row is the start of quitting.
-- **Sunday** is review and mock day, or rest if you need it.
+- **Friday Gauntlet:** 2 cold re-solves of the week's problems, no hints, solution mark only. Clearing it is logged with `dsa.py event mock` (+40 XP). The dashboard shows it Friday to Sunday until it's done.
+- **Sunday** is pattern-card review, or rest if you need it.
+- **Tests gate:** `dsa.py log` refuses a problem until the file has at least 3 tests you wrote yourself. Writing test cases is graded in interviews.
 
 ### Daily ritual (2 hours)
 | Time | Block |
@@ -181,6 +183,7 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 Data Structures And Algorithms/
 ├── ROADMAP.md                 ← this file
 ├── dsa.py                     ← tracker CLI: XP, streak, re-solve queue
+├── patterns/                  ← pattern cards: spot it, core move, MY traps (updated after every problem)
 ├── progress/
 │   ├── log.csv                ← every problem: date, id, difficulty, hints used, time
 │   └── journal.md             ← one line a day: what tricked you
