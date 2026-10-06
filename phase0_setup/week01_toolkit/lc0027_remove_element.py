@@ -2,7 +2,9 @@
 LC 27 · Remove Element · Easy
 Link: https://leetcode.com/problems/remove-element/
 Pattern: Two pointers, same direction (slow writer i, fast reader j), same as LC 26
-Approach: TODO (his words, one line)
+Approach: two pointers. j moves every step; if nums[j] == val it does nothing,
+          otherwise nums[j] is written into slot i and i moves forward. So i only
+          moves when a keeper is written.
 Key insight: never move the vals anywhere. Copy every keeper into slot i; the
              leftovers past k are ignored. i ends up equal to k.
 vs LC 26: j starts at 0, not 1, because nums[0] may itself be val. The write
