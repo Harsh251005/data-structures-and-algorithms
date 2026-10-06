@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 .idea/
 *.xlsx
+CLAUDE.local.md
+.claude/settings.local.json
