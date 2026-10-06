@@ -4,6 +4,7 @@ DSA Forge: your daily DSA progress tracker.
 
     python dsa.py                                   dashboard
     python dsa.py log 121 E --mins 14 --hints 0     log a solved problem
+    python dsa.py log 121 E --hints 3 --viewed      solution viewed: re-solve tomorrow, then +3/+7/+21d
     python dsa.py resolve 121                       log a spaced re-solve
     python dsa.py event mock | promotion            log a mock / passed promotion review
     python dsa.py new 121 "Best Time to Buy and Sell Stock" E
@@ -43,6 +44,8 @@ XP_NO_HINTS = 5
 XP_RESOLVE = 5
 XP_EVENT = {"mock": 40, "promotion": 100}
 RESOLVE_AFTER_DAYS = (3, 7, 21)
+VIEWED_RESOLVE_AFTER_DAYS = (1, 3, 7, 21)  # solution was viewed: re-solve cold the next day first
+VIEWED_TAG = "[viewed]"
 DEFAULT_DAILY_TARGET = 2  # new problems per day, plus every re-solve that's due
 
 LEVELS = [  # (min xp, icon, title)
@@ -94,7 +97,7 @@ TIPS = [
     "If you need fast lookup, reach for a hash map before anything clever.",
     "Sorted input is a hint: think two pointers or binary search.",
     "'Contiguous subarray' usually means sliding window or prefix sums.",
-    "Stuck for 25 minutes? Ask for hint 1. Struggling past that isn't learning.",
+    "The timebox calls it: Easy hint at 15 min, solution at 30. Struggling past that isn't learning.",
     "Every recursive function is a promise: trust it for n-1, handle n.",
     "Write the edge cases before the code: empty, one element, all same, negatives.",
     "Name variables for what they mean: `left`, `window_sum`, not `i2`, `tmp`.",
@@ -221,6 +224,11 @@ def streaks(rows: list[dict], today: date) -> tuple[int, int, bool]:
     return current, best, at_risk
 
 
+def schedule_for(solve: dict) -> tuple[int, ...]:
+    """Re-solve offsets for a solve row: tighter when the solution was viewed (logged with --viewed)."""
+    return VIEWED_RESOLVE_AFTER_DAYS if (solve.get("note") or "").startswith(VIEWED_TAG) else RESOLVE_AFTER_DAYS
+
+
 def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
     """Each solve schedules re-solves at +3/+7/+21 days. Returns (due, upcoming) as (date, pid, name, stage)."""
     first_solve: dict[str, dict] = {}
@@ -233,9 +241,10 @@ def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
     due, upcoming = [], []
     for pid, r in first_solve.items():
         stage = resolves.get(pid, 0)
-        if stage >= len(RESOLVE_AFTER_DAYS):
+        offsets = schedule_for(r)
+        if stage >= len(offsets):
             continue
-        when = r["day"] + timedelta(days=RESOLVE_AFTER_DAYS[stage])
+        when = r["day"] + timedelta(days=offsets[stage])
         item = (when, pid, r["name"], stage + 1)
         (due if when <= today else upcoming).append(item)
     return sorted(due), sorted(upcoming)
@@ -417,13 +426,19 @@ def cmd_log(args) -> None:
     diff = normalize_diff(args.diff)
     xp = XP_SOLVE[diff] + (XP_NO_HINTS if args.hints == 0 else 0)
     name = args.name or find_problem_name(pid) or ""
-    append_log({"date": date.today().isoformat(), "kind": "solve", "pid": pid, "name": name, "diff": diff,
-                "hints": args.hints, "mins": args.mins or "", "xp": xp, "note": args.note or ""})
+    note = args.note or ""
+    if args.viewed:
+        note = f"{VIEWED_TAG} {note}".strip()
+    entry = {"date": date.today().isoformat(), "kind": "solve", "pid": pid, "name": name, "diff": diff,
+             "hints": args.hints, "mins": args.mins or "", "xp": xp, "note": note}
+    append_log(entry)
     print()
     print(f"   {c('✔', BOLD, GREEN)} LC {pid} {name} {c('[' + diff + ']', DIFF_STYLE[diff])}"
           + (c("  clean solve, no hints", GREEN) if args.hints == 0 else c(f"  {args.hints} hint(s)", GREY)))
-    first = date.today() + timedelta(days=RESOLVE_AFTER_DAYS[0])
-    print(c(f"   ↻ re-solve scheduled: {first.strftime('%a %d %b')} → +7d → +21d", GREY))
+    offsets = schedule_for(entry)
+    first = date.today() + timedelta(days=offsets[0])
+    rest = " → ".join(f"+{d}d" for d in offsets[1:])
+    print(c(f"   ↻ re-solve scheduled: {first.strftime('%a %d %b')} → {rest}", GREY))
     celebrate(rows, xp, date.today())
 
 
@@ -437,9 +452,10 @@ def cmd_resolve(args) -> None:
     append_log({"date": date.today().isoformat(), "kind": "resolve", "pid": pid, "name": solve["name"],
                 "diff": solve["diff"], "xp": XP_RESOLVE, "mins": args.mins or "", "note": args.note or ""})
     print()
-    stage = min(done + 1, len(RESOLVE_AFTER_DAYS))
-    print(f"   {c('↻', BOLD, SAFFRON)} LC {pid} {solve['name']} re-solved  {c(f'round {stage}/3', GREY)}"
-          + (c("  · locked in for good", GREEN) if done + 1 == len(RESOLVE_AFTER_DAYS) else ""))
+    total = len(schedule_for(solve))
+    stage = min(done + 1, total)
+    print(f"   {c('↻', BOLD, SAFFRON)} LC {pid} {solve['name']} re-solved  {c(f'round {stage}/{total}', GREY)}"
+          + (c("  · locked in for good", GREEN) if done + 1 == total else ""))
     celebrate(rows, XP_RESOLVE, date.today())
 
 
@@ -622,6 +638,7 @@ def main() -> None:
     p.add_argument("--mins", type=int, help="minutes taken")
     p.add_argument("--name", help="problem name (auto-read from your solution file if omitted)")
     p.add_argument("--note", help="short note")
+    p.add_argument("--viewed", action="store_true", help="solution was viewed: first re-solve tomorrow (+1/+3/+7/+21d)")
     p.set_defaults(fn=cmd_log)
 
     p = sub.add_parser("resolve", help="log a spaced re-solve")

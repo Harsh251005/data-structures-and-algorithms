@@ -25,16 +25,24 @@ You'll write every line of code yourself. My role is the senior engineer sitting
 | 3. **Build it** | You write the core template from scratch (binary search, BFS…) and it goes into `templates/` | You |
 | 4. **Ladder** | Problems in order of difficulty: Easy → Medium → Medium+ → Hard | You |
 | 5. **Review** | I review your code the way I would a PR: correctness, edge cases, complexity, naming, cleaner alternatives | Me |
-| 6. **Re-solve** | The same problems come back on Day 3, 7 and 21 (spaced repetition) | You |
+| 6. **Re-solve** | The same problems come back on Day 3, 7 and 21 (spaced repetition). If you saw the solution, it also comes back the next day | You |
 
-### The hint ladder: I never hand you the solution
-When you're stuck, ask for hints in order:
+### The hint ladder
+Hints come in this order:
 1. **Nudge**: "What do you need to look up quickly here?"
 2. **Pattern**: "This is a sliding window problem. What makes the window invalid?"
 3. **Skeleton**: the outline of the approach in plain English, without code.
 4. **Walkthrough**: only after a real attempt. Afterwards you re-code it yourself the next day.
 
-**25-minute rule:** stuck for 25 minutes with no progress means ask for hint 1. Struggling longer than that stops being useful.
+**Timebox (agreed 2026-10-06):** the clock counts work minutes from "start" (pomodoro breaks excluded). You never decide when to give up; the timer calls it, with a desktop alert, and I act on it straight away without asking:
+
+| Difficulty | Hint arrives at | Full solution arrives at |
+|---|---|---|
+| Easy | 15 min | 30 min |
+| Medium | 25 min | 45 min |
+| Hard | 40 min | 60 min |
+
+After a viewed solution you type it from memory, it is logged with `--viewed`, and it comes back for a cold re-solve the next day.
 
 ### The 6-step problem framework (practise it from day 1, because interviews grade it)
 1. **Understand.** Restate the problem, ask about input size, edge cases, duplicates and negatives.

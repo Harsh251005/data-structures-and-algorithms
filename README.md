@@ -14,6 +14,7 @@ My DSA journey from zero to MNC-interview level, in Python, one day at a time.
 python dsa.py                                   # dashboard
 python dsa.py new 1 "Two Sum" E                 # create a solution file in this week's folder
 python dsa.py log 1 E --mins 18 --hints 0       # log a solve
+python dsa.py log 1 E --hints 3 --viewed       # solution viewed: re-solve tomorrow, then days 3, 7, 21
 python dsa.py resolve 1                         # spaced re-solve (days 3, 7, 21)
 python dsa.py journal "forgot the empty input"  # one-line journal
 python dsa.py week next                         # move to the next roadmap week
