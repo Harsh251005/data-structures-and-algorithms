@@ -7,11 +7,15 @@ DSA Forge: your daily DSA progress tracker.
     python dsa.py log 121 E --hints 3 --viewed      solution viewed: re-solve tomorrow, then +3/+7/+21d
     python dsa.py resolve 121                       log a spaced re-solve
     python dsa.py event mock | promotion            log a mock / passed promotion review
+    python dsa.py next                              set up the next problem of the current unit
     python dsa.py new 121 "Best Time to Buy and Sell Stock" E
-                                                    create a solution file in this week's folder
+                                                    create a solution file (in the unit that lists it)
+    python dsa.py add 1752 "Check if Array Is Sorted and Rotated" E
+                                                    add a reinforcement problem to the current unit
     python dsa.py journal "forgot the empty-array case"
-    python dsa.py week [next | <n>]                 show / move the current roadmap week
-    python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves)
+    python dsa.py unit [next]                       show the current unit (it advances by itself)
+    python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves;
+                                                    1 new on days that start with 4+ re-solves due)
     python dsa.py check 121                         count your own tests (log needs 3)
     python dsa.py undo                              remove the last log entry
 
@@ -24,6 +28,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import os
 import re
 import sys
@@ -61,37 +66,126 @@ LEVELS = [  # (min xp, icon, title)
 
 STREAK_MILESTONES = {3, 7, 14, 21, 30, 50, 75, 100, 150, 200, 365}
 
-CURRICULUM = {  # week: (folder, topic)
-    1: ("phase0_setup/week01_toolkit", "Setup · Python toolkit · Big-O"),
-    2: ("phase1_foundations/week02_arrays_strings", "Arrays & Strings"),
-    3: ("phase1_foundations/week03_hashing", "Hashing"),
-    4: ("phase1_foundations/week04_two_pointers", "Two Pointers"),
-    5: ("phase1_foundations/week05_sliding_window_prefix", "Sliding Window + Prefix Sum"),
-    6: ("phase2_core/week06_recursion", "Recursion"),
-    7: ("phase2_core/week07_sorting_binary_search", "Sorting + Binary Search"),
-    8: ("phase2_core/week08_bs_answer_linked_lists", "Binary Search on Answer + Linked Lists"),
-    9: ("phase2_core/week09_stacks_queues", "Stacks, Queues, Monotonic Stack"),
-    10: ("phase2_core/week10_consolidation", "Consolidation"),
-    11: ("phase3_trees/week11_binary_trees_1", "Binary Trees I"),
-    12: ("phase3_trees/week12_binary_trees_2", "Binary Trees II"),
-    13: ("phase3_trees/week13_bst_heaps", "BST + Heaps"),
-    14: ("phase3_trees/week14_backtracking", "Backtracking"),
-    15: ("phase3_trees/week15_greedy_intervals", "Greedy + Intervals"),
-    16: ("phase4_graphs/week16_graph_basics", "Graph Basics"),
-    17: ("phase4_graphs/week17_bfs_toposort", "Multi-source BFS + Topological Sort"),
-    18: ("phase4_graphs/week18_union_find", "Union-Find"),
-    19: ("phase4_graphs/week19_shortest_paths_mst", "Shortest Paths + MST"),
-    20: ("phase5_dp/week20_dp_1d", "1D DP"),
-    21: ("phase5_dp/week21_dp_1d_2", "1D DP II"),
-    22: ("phase5_dp/week22_dp_grid", "2D / Grid DP"),
-    23: ("phase5_dp/week23_knapsack", "Knapsack Family"),
-    24: ("phase5_dp/week24_string_dp", "String DP"),
-    25: ("phase5_dp/week25_advanced_dp", "State-machine / Tree / Interval DP"),
-    26: ("phase6_advanced/week26_tries_bits", "Tries + Bit Manipulation"),
-    27: ("phase6_advanced/week27_deque_windows", "Monotonic Deque + Advanced Windows"),
-    28: ("phase6_advanced/week28_segtree_strings", "Segment / Fenwick Tree + KMP"),
-    29: ("phase6_advanced/week29_hard_week", "Hard-problem Week"),
+RESOLVE_CAP = 4  # this many re-solves due at the start of a day drops that day's new target to 1
+QUALITY_HINTS = 3.0  # a unit averaging this many hints needs reinforcement problems before it counts as done
+REINFORCE_COUNT = 2  # how many reinforcement problems (`dsa.py add`) clear the quality flag
+UNLISTED_UNIT_SIZE = 7  # ETA guess for a unit without a fixed list
+
+
+def _p(spec: str) -> list[tuple[str, str, str]]:
+    """'1 E Two Sum; 217 E Contains Duplicate' -> [(pid, diff, name), ...]"""
+    return [tuple(item.strip().split(" ", 2)) for item in spec.split(";") if item.strip()]
+
+
+# Units replace calendar weeks: a unit is done when its problems are, however many days that takes.
+# A pid belongs to the first unit that lists it; later mentions in ROADMAP.md are re-solves.
+UNITS = {  # unit: (folder, topic, problems)
+    1: ("phase0_setup/week01_toolkit", "Setup · Python toolkit · Big-O",
+        _p("1 E Two Sum; 217 E Contains Duplicate; 344 E Reverse String")),
+    2: ("phase1_foundations/week02_arrays_strings", "Arrays & Strings",
+        _p("26 E Remove Duplicates from Sorted Array; 27 E Remove Element; 88 E Merge Sorted Array;"
+           "121 E Best Time to Buy and Sell Stock; 169 E Majority Element; 14 E Longest Common Prefix;"
+           "125 E Valid Palindrome; 387 E First Unique Character in a String; 189 M Rotate Array;"
+           "238 M Product of Array Except Self")),
+    3: ("phase1_foundations/week03_hashing", "Hashing",
+        _p("242 E Valid Anagram; 383 E Ransom Note; 205 E Isomorphic Strings; 290 E Word Pattern;"
+           "49 M Group Anagrams; 347 M Top K Frequent Elements; 128 M Longest Consecutive Sequence;"
+           "36 M Valid Sudoku; 560 M Subarray Sum Equals K")),
+    4: ("phase1_foundations/week04_two_pointers", "Two Pointers",
+        _p("283 E Move Zeroes; 977 E Squares of a Sorted Array; 167 M Two Sum II - Input Array Is Sorted;"
+           "15 M 3Sum; 11 M Container With Most Water; 75 M Sort Colors; 42 H Trapping Rain Water")),
+    5: ("phase1_foundations/week05_sliding_window_prefix", "Sliding Window + Prefix Sum",
+        _p("643 E Maximum Average Subarray I; 724 E Find Pivot Index; 303 E Range Sum Query - Immutable;"
+           "3 M Longest Substring Without Repeating Characters; 209 M Minimum Size Subarray Sum;"
+           "1004 M Max Consecutive Ones III; 424 M Longest Repeating Character Replacement;"
+           "567 M Permutation in String; 525 M Contiguous Array; 974 M Subarray Sums Divisible by K;"
+           "76 H Minimum Window Substring")),
+    6: ("phase2_core/week06_recursion", "Recursion",
+        _p("509 E Fibonacci Number; 231 E Power of Two; 50 M Pow(x, n); 206 E Reverse Linked List;"
+           "21 E Merge Two Sorted Lists")),
+    7: ("phase2_core/week07_sorting_binary_search", "Sorting + Binary Search",
+        _p("912 M Sort an Array; 704 E Binary Search; 35 E Search Insert Position; 278 E First Bad Version;"
+           "69 E Sqrt(x); 74 M Search a 2D Matrix; 34 M Find First and Last Position of Element in Sorted Array;"
+           "33 M Search in Rotated Sorted Array; 153 M Find Minimum in Rotated Sorted Array; 162 M Find Peak Element")),
+    8: ("phase2_core/week08_bs_answer_linked_lists", "Binary Search on Answer + Linked Lists",
+        _p("875 M Koko Eating Bananas; 1011 M Capacity To Ship Packages Within D Days; 410 H Split Array Largest Sum;"
+           "206 E Reverse Linked List; 876 E Middle of the Linked List; 141 E Linked List Cycle;"
+           "160 E Intersection of Two Linked Lists; 234 E Palindrome Linked List; 19 M Remove Nth Node From End of List;"
+           "142 M Linked List Cycle II; 143 M Reorder List; 2 M Add Two Numbers")),
+    9: ("phase2_core/week09_stacks_queues", "Stacks, Queues, Monotonic Stack",
+        _p("20 E Valid Parentheses; 232 E Implement Queue using Stacks; 496 E Next Greater Element I; 155 M Min Stack;"
+           "150 M Evaluate Reverse Polish Notation; 394 M Decode String; 739 M Daily Temperatures;"
+           "503 M Next Greater Element II; 901 M Online Stock Span; 853 M Car Fleet; 84 H Largest Rectangle in Histogram")),
+    10: ("phase2_core/week10_consolidation", "Consolidation",
+         _p("138 M Copy List with Random Pointer; 146 M LRU Cache; 215 M Kth Largest Element in an Array;"
+            "56 M Merge Intervals; 179 M Largest Number; 23 H Merge k Sorted Lists; 25 H Reverse Nodes in k-Group")),
+    11: ("phase3_trees/week11_binary_trees_1", "Binary Trees I",
+         _p("94 E Binary Tree Inorder Traversal; 144 E Binary Tree Preorder Traversal; 145 E Binary Tree Postorder Traversal;"
+            "104 E Maximum Depth of Binary Tree; 226 E Invert Binary Tree; 100 E Same Tree; 101 E Symmetric Tree;"
+            "112 E Path Sum; 102 M Binary Tree Level Order Traversal; 103 M Binary Tree Zigzag Level Order Traversal;"
+            "199 M Binary Tree Right Side View")),
+    12: ("phase3_trees/week12_binary_trees_2", "Binary Trees II",
+         _p("543 E Diameter of Binary Tree; 110 E Balanced Binary Tree; 572 E Subtree of Another Tree; 113 M Path Sum II;"
+            "1448 M Count Good Nodes in Binary Tree; 236 M Lowest Common Ancestor of a Binary Tree;"
+            "105 M Construct Binary Tree from Preorder and Inorder Traversal; 124 H Binary Tree Maximum Path Sum;"
+            "297 H Serialize and Deserialize Binary Tree")),
+    13: ("phase3_trees/week13_bst_heaps", "BST + Heaps",
+         _p("700 E Search in a Binary Search Tree; 701 M Insert into a Binary Search Tree;"
+            "235 M Lowest Common Ancestor of a Binary Search Tree; 98 M Validate Binary Search Tree;"
+            "230 M Kth Smallest Element in a BST; 450 M Delete Node in a BST; 703 E Kth Largest Element in a Stream;"
+            "1046 E Last Stone Weight; 973 M K Closest Points to Origin; 621 M Task Scheduler; 355 M Design Twitter;"
+            "295 H Find Median from Data Stream")),
+    14: ("phase3_trees/week14_backtracking", "Backtracking",
+         _p("78 M Subsets; 90 M Subsets II; 46 M Permutations; 47 M Permutations II; 77 M Combinations;"
+            "39 M Combination Sum; 40 M Combination Sum II; 17 M Letter Combinations of a Phone Number;"
+            "79 M Word Search; 131 M Palindrome Partitioning; 51 H N-Queens")),
+    15: ("phase3_trees/week15_greedy_intervals", "Greedy + Intervals",
+         _p("455 E Assign Cookies; 55 M Jump Game; 45 M Jump Game II; 134 M Gas Station; 763 M Partition Labels;"
+            "846 M Hand of Straights; 678 M Valid Parenthesis String; 57 M Insert Interval; 435 M Non-overlapping Intervals;"
+            "452 M Minimum Number of Arrows to Burst Balloons; 135 H Candy")),
+    16: ("phase4_graphs/week16_graph_basics", "Graph Basics",
+         _p("1971 E Find if Path Exists in Graph; 733 E Flood Fill; 200 M Number of Islands; 695 M Max Area of Island;"
+            "841 M Keys and Rooms; 133 M Clone Graph; 547 M Number of Provinces; 130 M Surrounded Regions")),
+    17: ("phase4_graphs/week17_bfs_toposort", "Multi-source BFS + Topological Sort",
+         _p("994 M Rotting Oranges; 1091 M Shortest Path in Binary Matrix; 417 M Pacific Atlantic Water Flow;"
+            "785 M Is Graph Bipartite?; 207 M Course Schedule; 210 M Course Schedule II; 127 H Word Ladder")),
+    18: ("phase4_graphs/week18_union_find", "Union-Find",
+         _p("684 M Redundant Connection; 721 M Accounts Merge; 990 M Satisfiability of Equality Equations")),
+    19: ("phase4_graphs/week19_shortest_paths_mst", "Shortest Paths + MST",
+         _p("743 M Network Delay Time; 787 M Cheapest Flights Within K Stops; 1584 M Min Cost to Connect All Points;"
+            "778 H Swim in Rising Water; 332 H Reconstruct Itinerary")),
+    20: ("phase5_dp/week20_dp_1d", "1D DP",
+         _p("70 E Climbing Stairs; 746 E Min Cost Climbing Stairs; 198 M House Robber; 213 M House Robber II;"
+            "91 M Decode Ways; 343 M Integer Break")),
+    21: ("phase5_dp/week21_dp_1d_2", "1D DP II",
+         _p("322 M Coin Change; 139 M Word Break; 300 M Longest Increasing Subsequence; 152 M Maximum Product Subarray;"
+            "5 M Longest Palindromic Substring; 647 M Palindromic Substrings")),
+    22: ("phase5_dp/week22_dp_grid", "2D / Grid DP",
+         _p("62 M Unique Paths; 63 M Unique Paths II; 64 M Minimum Path Sum; 120 M Triangle; 221 M Maximal Square;"
+            "329 H Longest Increasing Path in a Matrix")),
+    23: ("phase5_dp/week23_knapsack", "Knapsack Family",
+         _p("416 M Partition Equal Subset Sum; 494 M Target Sum; 518 M Coin Change II")),
+    24: ("phase5_dp/week24_string_dp", "String DP",
+         _p("1143 M Longest Common Subsequence; 72 M Edit Distance; 97 M Interleaving String; 115 H Distinct Subsequences;"
+            "10 H Regular Expression Matching")),
+    25: ("phase5_dp/week25_advanced_dp", "State-machine / Tree / Interval DP",
+         _p("309 M Best Time to Buy and Sell Stock with Cooldown; 337 M House Robber III;"
+            "1235 H Maximum Profit in Job Scheduling; 312 H Burst Balloons")),
+    26: ("phase6_advanced/week26_tries_bits", "Tries + Bit Manipulation",
+         _p("208 M Implement Trie (Prefix Tree); 211 M Design Add and Search Words Data Structure; 212 H Word Search II;"
+            "136 E Single Number; 191 E Number of 1 Bits; 338 E Counting Bits; 268 E Missing Number; 190 E Reverse Bits;"
+            "371 M Sum of Two Integers")),
+    27: ("phase6_advanced/week27_deque_windows", "Monotonic Deque + Advanced Windows",
+         _p("239 H Sliding Window Maximum; 4 H Median of Two Sorted Arrays")),
+    28: ("phase6_advanced/week28_segtree_strings", "Segment / Fenwick Tree + KMP",
+         _p("307 M Range Sum Query - Mutable; 315 H Count of Smaller Numbers After Self;"
+            "28 E Find the Index of the First Occurrence in a String")),
+    29: ("phase6_advanced/week29_hard_week", "Hard-problem Week", []),  # mixed hards, picked when we get there
 }
+_seen: set[str] = set()
+for _u, (_f, _t, _probs) in UNITS.items():  # keep each pid in its first unit only
+    UNITS[_u] = (_f, _t, [p for p in _probs if p[0] not in _seen])
+    _seen.update(p[0] for p in _probs)
 INTERVIEW_MODE = ("phase7_interview", "Interview Mode")
 
 TIPS = [
@@ -152,8 +246,10 @@ def bar(fraction: float, width: int = 34) -> str:
 # ── Storage ───────────────────────────────────────────────────────────────────
 def load_state() -> dict:
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
-    state = {"start": date.today().isoformat(), "week": 1}
+        state = json.loads(STATE_FILE.read_text())
+        state.pop("week", None)  # pre-units: the current unit is now derived from the log
+        return state
+    state = {"start": date.today().isoformat()}
     save_state(state)
     return state
 
@@ -252,6 +348,13 @@ def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
     return sorted(due), sorted(upcoming)
 
 
+def target_for(rows: list[dict], today: date, state: dict) -> int:
+    """The base target, dropped to 1 when this morning's re-solve queue was RESOLVE_CAP or more."""
+    base = state.get("daily_target", DEFAULT_DAILY_TARGET)
+    due_at_start, _ = resolve_queue([r for r in rows if r["day"] < today], today)
+    return 1 if len(due_at_start) >= RESOLVE_CAP else base
+
+
 def daily_progress(rows: list[dict], today: date, target: int) -> tuple[int, int, bool]:
     """(new problems solved today, re-solves still due, target met). Met = target new solves + empty re-solve queue."""
     new_today = sum(1 for r in rows if r["kind"] == "solve" and r["day"] == today)
@@ -281,8 +384,62 @@ def gauntlet_line(rows: list[dict], today: date) -> str:
     return c("⚔  Friday Gauntlet due: 2 cold re-solves from this week, no hints → python dsa.py event mock", BOLD, GOLD)
 
 
-def week_info(week: int) -> tuple[str, str]:
-    return CURRICULUM.get(week, INTERVIEW_MODE)
+def unit_info(unit: int) -> tuple[str, str]:
+    folder, topic, _ = UNITS.get(unit, (*INTERVIEW_MODE, []))
+    return folder, topic
+
+
+def solved_hints(rows: list[dict]) -> dict[str, int]:
+    """pid -> hints on its first solve."""
+    out: dict[str, int] = {}
+    for r in rows:
+        if r["kind"] == "solve" and r["pid"] not in out:
+            out[r["pid"]] = int(r["hints"] or 0)
+    return out
+
+
+def unit_problems(unit: int, state: dict) -> list[tuple[str, str, str]]:
+    """The unit's list plus any reinforcement problems added with `dsa.py add`."""
+    listed = UNITS[unit][2] if unit in UNITS else []
+    return listed + [tuple(p) for p in state.get("extras", {}).get(str(unit), [])]
+
+
+def unit_status(unit: int, rows: list[dict], state: dict) -> dict:
+    """done/total, average hints over the listed problems, and whether the unit needs reinforcement."""
+    hints = solved_hints(rows)
+    listed = UNITS[unit][2] if unit in UNITS else []
+    problems = unit_problems(unit, state)
+    done = [p for p in problems if p[0] in hints]
+    listed_done = [hints[p[0]] for p in listed if p[0] in hints]
+    avg = sum(listed_done) / len(listed_done) if listed_done else 0.0
+    extras = state.get("extras", {}).get(str(unit), [])
+    weak = avg >= QUALITY_HINTS and len(extras) < REINFORCE_COUNT
+    complete = bool(listed) and len(done) == len(problems) and not weak
+    return {"done": len(done), "total": len(problems), "avg_hints": avg, "weak": weak, "complete": complete}
+
+
+def current_unit(rows: list[dict], state: dict) -> int:
+    """First unit (at or after any manual `unit next` skip) that isn't complete. Never set by hand per problem."""
+    unit = state.get("unit_floor", 1)
+    while unit in UNITS and unit_status(unit, rows, state)["complete"]:
+        unit += 1
+    return unit
+
+
+def unit_of(pid: str, state: dict) -> int | None:
+    return next((u for u in UNITS if any(p[0] == pid for p in unit_problems(u, state))), None)
+
+
+def pace(rows: list[dict], today: date, state: dict) -> float:
+    """New problems per day over the last 7 days (fewer if the project is younger)."""
+    window = min(7, (today - date.fromisoformat(state["start"])).days + 1)
+    recent = sum(1 for r in rows if r["kind"] == "solve" and (today - r["day"]).days < window)
+    return recent / window
+
+
+def eta(remaining: int, per_day: float, today: date) -> date | None:
+    """The day the remaining problems run out at this pace, counting from tomorrow."""
+    return today + timedelta(days=math.ceil(remaining / per_day)) if per_day else None
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
@@ -320,7 +477,6 @@ def dashboard() -> None:
     current, best, at_risk = streaks(rows, today)
     due, upcoming = resolve_queue(rows, today)
     day_no = (today - date.fromisoformat(state["start"])).days + 1
-    _, topic = week_info(state["week"])
     done_today = any(r["day"] == today for r in rows)
 
     header = f"  D S A   F O R G E"
@@ -355,18 +511,44 @@ def dashboard() -> None:
     print()
 
     # Today's target
-    target = state.get("daily_target", DEFAULT_DAILY_TARGET)
+    target = target_for(rows, today, state)
     new_today, _, met = daily_progress(rows, today, target)
     print("  " + rule("today's target"))
     print(f"   {bar(min(1.0, new_today / target), width=20)}  " + target_line(rows, today, target))
+    if target < state.get("daily_target", DEFAULT_DAILY_TARGET):
+        print("   " + c(f"Re-solve heavy day ({RESOLVE_CAP}+ due this morning): 1 new problem today.", GREY))
     gauntlet = gauntlet_line(rows, today)
     if gauntlet:
         print("   " + gauntlet)
     print()
 
-    # This week
-    print("  " + rule("this week"))
-    print(f"   Week {c(str(state['week']), BOLD, GOLD)} · {c(topic, BOLD)}")
+    # Roadmap: units move at his pace, dates are estimates from the last 7 days
+    unit = current_unit(rows, state)
+    _, topic = unit_info(unit)
+    print("  " + rule("roadmap"))
+    if unit in UNITS:
+        st = unit_status(unit, rows, state)
+        frac = st["done"] / st["total"] if st["total"] else 0
+        print(f"   Unit {c(str(unit), BOLD, GOLD)} · {c(topic, BOLD)}   {bar(frac, width=12)}  {st['done']}/{st['total'] or '?'}")
+        if st["weak"]:
+            print("   " + c(f"⚠  Averaging {st['avg_hints']:.1f} hints here: {REINFORCE_COUNT} reinforcement problems "
+                            "before the next unit.", GOLD))
+        per_day = pace(rows, today, state)
+        if per_day:
+            left_unit = st["total"] - st["done"] + (REINFORCE_COUNT if st["weak"] else 0)
+            phase = UNITS[unit][0].split("/")[0]
+            later = [u for u in UNITS if u > unit]
+            left_phase = left_unit + sum(len(unit_problems(u, state)) or UNLISTED_UNIT_SIZE
+                                         for u in later if UNITS[u][0].startswith(phase))
+            left_all = left_unit + sum(len(unit_problems(u, state)) or UNLISTED_UNIT_SIZE for u in later)
+            nxt = unit_info(unit + 1)[1]
+            phase_name = phase.split("_")[0].replace("phase", "Phase ")
+            print(f"   {c('pace', GREY)} {per_day:.1f} new/day   {c('│', GREY)}   "
+                  f"{c('next:', GREY)} {c(nxt, CREAM)} ~{eta(left_unit, per_day, today):%a %d %b}")
+            print(f"   {c(phase_name + ' done', GREY)} ~{eta(left_phase, per_day, today):%d %b}   {c('│', GREY)}   "
+                  f"{c('full roadmap', GREY)} ~{eta(left_all, per_day, today):%b %Y}")
+    else:
+        print(f"   {c(topic, BOLD, GOLD)}: mocks, contests, company-tagged sets")
     week_rows = [r for r in rows if (today - r["day"]).days < 7]
     solves = [r for r in rows if r["kind"] == "solve"]
     counts = {d: sum(1 for r in solves if r["diff"] == d) for d in "EMH"}
@@ -424,7 +606,7 @@ def celebrate(rows_before: list[dict], gained: int, today: date) -> None:
         if current in STREAK_MILESTONES:
             msg += c(f"  ·  {current}-day milestone. This is what consistency looks like.", BOLD, SAFFRON)
         print("   " + msg)
-    target = load_state().get("daily_target", DEFAULT_DAILY_TARGET)
+    target = target_for(rows_after, today, load_state())
     print("   " + target_line(rows_after, today, target))
     print()
 
@@ -523,15 +705,27 @@ def cmd_journal(args) -> None:
     print(c("   ✎ noted.", GREEN))
 
 
-def cmd_week(args) -> None:
+def cmd_unit(args) -> None:
     state = load_state()
-    if args.value == "next":
-        state["week"] += 1
-    elif args.value:
-        state["week"] = int(args.value)
+    if args.value == "next":  # only for a unit without a fixed list (e.g. the hard week)
+        state["unit_floor"] = current_unit(load_log(), state) + 1
+        save_state(state)
+    unit = current_unit(load_log(), state)
+    folder, topic = unit_info(unit)
+    print(f"   Unit {c(str(unit), BOLD, GOLD)} · {c(topic, BOLD)}  {c(folder + '/', GREY)}")
+
+
+def cmd_add(args) -> None:
+    """Add a reinforcement problem to a unit (default: the current one)."""
+    state = load_state()
+    unit = args.unit or current_unit(load_log(), state)
+    diff = normalize_diff(args.diff)
+    extras = state.setdefault("extras", {}).setdefault(str(unit), [])
+    if unit_of(str(args.pid), state):
+        sys.exit(c(f"LC {args.pid} is already in unit {unit_of(str(args.pid), state)}", GOLD))
+    extras.append([str(args.pid), diff, args.name])
     save_state(state)
-    folder, topic = week_info(state["week"])
-    print(f"   Week {c(str(state['week']), BOLD, GOLD)} · {c(topic, BOLD)}  {c(folder + '/', GREY)}")
+    print(f"   {c('+', BOLD, GREEN)} LC {args.pid} {args.name} added to unit {unit} ({unit_info(unit)[1]})")
 
 
 def cmd_target(args) -> None:
@@ -598,7 +792,7 @@ def docstring_fields(path: Path) -> dict[str, str]:
 
 def topic_for(path: Path) -> str:
     rel = str(path.relative_to(ROOT).parent)
-    return next((topic for folder, topic in CURRICULUM.values() if folder == rel), rel)
+    return next((topic for folder, topic, _ in UNITS.values() if folder == rel), rel)
 
 
 TRACKER_COLUMNS = ["#", "Date", "LC #", "Problem", "Difficulty", "Topic", "Pattern", "Minutes", "Hints",
@@ -619,14 +813,15 @@ def write_tracker(rows: list[dict] | None = None) -> None:
         path = solution_file(r["pid"])
         f = docstring_fields(path) if path else {}
         done = len(resolves.get(r["pid"], []))
-        nxt = (r["day"] + timedelta(days=RESOLVE_AFTER_DAYS[done])).isoformat() if done < len(RESOLVE_AFTER_DAYS) else ""
+        offsets = schedule_for(r)  # viewed solutions run +1/+3/+7/+21
+        nxt = (r["day"] + timedelta(days=offsets[done])).isoformat() if done < len(offsets) else ""
         out.append({
             "#": n, "Date": r["date"], "LC #": r["pid"], "Problem": r["name"],
             "Difficulty": {"E": "Easy", "M": "Medium", "H": "Hard"}.get(r["diff"], r["diff"]),
             "Topic": topic_for(path) if path else "", "Pattern": f.get("Pattern", ""),
             "Minutes": r["mins"], "Hints": r["hints"], "Clean solve": "Yes" if r["hints"] in ("0", 0) else "No",
-            "XP": r["xp"], "Re-solves done": f"{done} of {len(RESOLVE_AFTER_DAYS)}", "Next re-solve": nxt,
-            "Mastered": "Yes" if done >= len(RESOLVE_AFTER_DAYS) else "No",
+            "XP": r["xp"], "Re-solves done": f"{done} of {len(offsets)}", "Next re-solve": nxt,
+            "Mastered": "Yes" if done >= len(offsets) else "No",
             "Key insight": f.get("Key insight", ""), "LeetCode": f.get("Link", ""),
             "Solution": f"{REPO_URL}/blob/main/{path.relative_to(ROOT).as_posix()}" if path else "",
         })
@@ -665,20 +860,46 @@ if __name__ == "__main__":
 '''
 
 
-def cmd_new(args) -> None:
+def create_solution(pid: str, name: str, diff: str) -> None:
+    """Solution file in the folder of the unit that lists the pid (else the current unit)."""
     state = load_state()
-    folder, _ = week_info(state["week"])
-    diff = normalize_diff(args.diff)
-    pid = str(args.pid)
+    folder, _ = unit_info(unit_of(pid, state) or current_unit(load_log(), state))
+    create_file(folder, pid, name, normalize_diff(diff))
+
+
+def cmd_new(args) -> None:
+    create_solution(str(args.pid), args.name, args.diff)
+
+
+def cmd_next(_args) -> None:
+    """Set up the next unsolved problem of the current unit, or point at the one already in progress."""
+    rows, state = load_log(), load_state()
+    unit = current_unit(rows, state)
+    if unit not in UNITS:
+        sys.exit(c("No fixed list here: pick a problem and use `dsa.py new`.", GOLD))
+    solved = solved_hints(rows)
+    todo = [p for p in unit_problems(unit, state) if p[0] not in solved]
+    if not todo:
+        sys.exit(c(f"Unit {unit} needs {REINFORCE_COUNT} reinforcement problems: dsa.py add <pid> \"<Name>\" <E|M|H>", GOLD))
+    pid, diff, name = todo[0]
+    existing = solution_file(pid)
+    if existing:
+        print(f"   {c('→', BOLD, CYAN)} in progress: {c(str(existing.relative_to(ROOT)), BOLD)}")
+        return
+    create_solution(pid, name, diff)
+
+
+def create_file(folder: str, pid: str, name: str, diff: str) -> None:
     prefix = f"lc{int(pid):04d}" if pid.isdigit() else f"lc{slugify(pid)}"
-    target = ROOT / folder / f"{prefix}_{slugify(args.name)}.py"
+    target = ROOT / folder / f"{prefix}_{slugify(name)}.py"
     if target.exists():
         sys.exit(c(f"already exists: {target.relative_to(ROOT)}", GOLD))
     target.parent.mkdir(parents=True, exist_ok=True)
     full = {"E": "Easy", "M": "Medium", "H": "Hard"}[diff]
-    slug = re.sub(r"[^a-z0-9 -]", "", args.name.lower()).strip().replace(" ", "-")
-    target.write_text(SOLUTION_TEMPLATE.format(pid=pid, name=args.name, difficulty=full, slug=re.sub(r"-+", "-", slug)))
+    slug = re.sub(r"-+", "-", re.sub(r"[^a-z0-9 -]", "", name.lower()).strip().replace(" ", "-"))
+    target.write_text(SOLUTION_TEMPLATE.format(pid=pid, name=name, difficulty=full, slug=slug))
     print(f"   {c('✚', BOLD, GREEN)} created {c(str(target.relative_to(ROOT)), BOLD)}")
+    print(f"   {c('LC ' + pid + ' · ' + name, BOLD)}  https://leetcode.com/problems/{slug}/")
     print(c(f"   when solved: python dsa.py log {pid} {diff} --mins <n> --hints <n>", GREY))
 
 
@@ -707,7 +928,17 @@ def main() -> None:
     p.add_argument("--note")
     p.set_defaults(fn=cmd_event)
 
-    p = sub.add_parser("new", help="create a solution file in this week's folder")
+    p = sub.add_parser("next", help="set up the next problem of the current unit")
+    p.set_defaults(fn=cmd_next)
+
+    p = sub.add_parser("add", help="add a reinforcement problem to a unit")
+    p.add_argument("pid")
+    p.add_argument("name")
+    p.add_argument("diff", help="E | M | H")
+    p.add_argument("--unit", type=int, help="unit number (default: current)")
+    p.set_defaults(fn=cmd_add)
+
+    p = sub.add_parser("new", help="create a solution file (in the unit that lists it)")
     p.add_argument("pid")
     p.add_argument("name")
     p.add_argument("diff", help="E | M | H")
@@ -717,9 +948,9 @@ def main() -> None:
     p.add_argument("text")
     p.set_defaults(fn=cmd_journal)
 
-    p = sub.add_parser("week", help="show or set the current roadmap week")
-    p.add_argument("value", nargs="?", help="'next' or a week number")
-    p.set_defaults(fn=cmd_week)
+    p = sub.add_parser("unit", help="show the current unit ('next' skips a unit without a fixed list)")
+    p.add_argument("value", nargs="?", choices=["next"])
+    p.set_defaults(fn=cmd_unit)
 
     p = sub.add_parser("target", help="show or set the daily new-problem target")
     p.add_argument("n", nargs="?", type=int)

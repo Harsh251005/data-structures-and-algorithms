@@ -1,7 +1,7 @@
 # DSA Roadmap: Zero → MNC Interview Ready
 
 **Learner:** Harsh · **Language:** Python 3.14 · **Editor:** PyCharm · **Started:** 2026-10-04
-**Pace:** ~2 h/day, 6 days/week · **Estimated length:** ~30 weeks (7–8 months), then interview mode
+**Pace:** ~2 h/day, 6 days/week · **Length:** set by your pace. The dashboard's ROADMAP section shows live estimates (next unit, phase end, full roadmap) from your last 7 days
 
 **Exit criteria.** You're done when, on unseen problems, you can do the following:
 - Solve a **medium** in 25–35 minutes while talking through your approach, the way you would with an interviewer.
@@ -9,6 +9,13 @@
 - State the time and space complexity of any solution without hesitating.
 
 > Honest calibration: the timeline is an estimate, not a promise. Most people reach "mediums are comfortable" after roughly 250–350 well-reviewed problems. Solving 600 problems carelessly gets you there slower than solving 300 carefully. The plan adjusts to your actual pace.
+
+### Units, not calendar weeks (2026-10-06)
+The curriculum below is split into **units** (numbered like the old weeks). A unit ends when its problem list is done, whether that takes 3 days or 9. `python dsa.py next` sets up the next problem in the list, and the next unit starts by itself when the current one is finished.
+- **Daily target:** at least 2 new problems plus all due re-solves. Doing more pulls the estimated dates forward. It does **not** bank days off, because the streak is about showing up.
+- **Re-solve cap:** if 4 or more re-solves are due at the start of a day, that day's target drops to 1 new problem, so the backlog can't snowball.
+- **Quality gate:** if a unit averages 3 or more hints per problem, it isn't done until 2 extra reinforcement problems (same pattern) are solved.
+- A problem belongs to the first unit that lists it. Later mentions (206 in Unit 8, 509 in Unit 20, 547 in Unit 18) are re-solves.
 
 ---
 
@@ -94,15 +101,15 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 `E` = Easy, `M` = Medium, `H` = Hard. Numbers are LeetCode problem IDs. ★ = must-do classic.
 
-### Phase 0: Setup & Toolkit (Week 1)
+### Phase 0: Setup & Toolkit (Unit 1)
 **Goal:** a working environment, plus the Python and Big-O you need before anything else.
 - PyCharm project, venv, pytest, git, folder structure (see §4)
 - Python for DSA: lists, slicing, `dict`, `set`, `collections` (`Counter`, `defaultdict`, `deque`), `heapq`, `sorted` with `key=`, list comprehensions, classes for nodes
 - **Big-O**: O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ). How to read code and state its complexity. Space complexity. Why `x in list` is O(n) and `x in set` is O(1)
 - Practice: 15 short "what's the complexity?" snippets I'll give you, plus 1 ★Two Sum (E), 217 Contains Duplicate (E), 344 Reverse String (E)
 
-### Phase 1: Foundations (Weeks 2–5) · 🎓 Intern
-| Week | Topic | Problems |
+### Phase 1: Foundations (Units 2–5) · 🎓 Intern
+| Unit | Topic | Problems |
 |---|---|---|
 | 2 | **Arrays & Strings** | 26 (E), 27 (E), 88 (E), 121★ (E), 169 (E), 14 (E), 125 (E), 387 (E), 189 (M), 238★ (M) |
 | 3 | **Hashing** | 242★ (E), 383 (E), 205 (E), 290 (E), 49★ (M), 347★ (M), 128★ (M), 36 (M), 560★ (M) |
@@ -111,8 +118,8 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 🏁 **Promotion review → SDE-1**
 
-### Phase 2: Core Techniques (Weeks 6–10) · 💼 SDE-1
-| Week | Topic | Problems |
+### Phase 2: Core Techniques (Units 6–10) · 💼 SDE-1
+| Unit | Topic | Problems |
 |---|---|---|
 | 6 | **Recursion** (call stack, base case, trust the recursion), trained with the debugger | 509 (E), 231 (E), 50 (M), recursive 206 (E), 21 (E), and I'll give you print-all-subsets |
 | 7 | **Sorting + Binary Search** (merge sort and quicksort written from scratch) | 912 (M), 704★ (E), 35 (E), 278 (E), 69 (E), 74 (M), 34★ (M), 33★ (M), 153★ (M), 162 (M) |
@@ -122,8 +129,8 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 🏁 **Promotion review → SDE-2**
 
-### Phase 3: Trees, Heaps, Backtracking (Weeks 11–15) · 🔧 SDE-2
-| Week | Topic | Problems |
+### Phase 3: Trees, Heaps, Backtracking (Units 11–15) · 🔧 SDE-2
+| Unit | Topic | Problems |
 |---|---|---|
 | 11 | **Binary Trees I**: traversals (recursive and iterative), DFS vs BFS | 94, 144, 145 (E), 104★ (E), 226★ (E), 100 (E), 101 (E), 112 (E), 102★ (M), 103 (M), 199★ (M) |
 | 12 | **Binary Trees II**: postorder thinking ("what does my child return?") | 543★ (E), 110 (E), 572 (E), 113 (M), 1448 (M), 236★ (M), 105★ (M), 124★ (H), 297 (H) |
@@ -133,8 +140,8 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 🏁 **Promotion review** (checkpoint, no level change)
 
-### Phase 4: Graphs (Weeks 16–19) · 🔧 SDE-2
-| Week | Topic | Problems |
+### Phase 4: Graphs (Units 16–19) · 🔧 SDE-2
+| Unit | Topic | Problems |
 |---|---|---|
 | 16 | **Graph basics**: adjacency lists, BFS/DFS, grids as graphs | 1971 (E), 733 (E), 200★ (M), 695 (M), 841 (M), 133★ (M), 547 (M), 130 (M) |
 | 17 | **Multi-source BFS + Topological Sort** | 994★ (M), 1091 (M), 417★ (M), 785 (M), 207★ (M), 210★ (M), 127★ (H) |
@@ -143,10 +150,10 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 🏁 **Promotion review → Senior SDE**
 
-### Phase 5: Dynamic Programming (Weeks 20–25) · 🧠 Senior SDE
-The big one. Method: **recursion → memoization → tabulation → space-optimised**, done in that order for every problem in the first two weeks.
+### Phase 5: Dynamic Programming (Units 20–25) · 🧠 Senior SDE
+The big one. Method: **recursion → memoization → tabulation → space-optimised**, done in that order for every problem in the first two units.
 
-| Week | Topic | Problems |
+| Unit | Topic | Problems |
 |---|---|---|
 | 20 | **1D DP** | 509 (E), 70★ (E), 746 (E), 198★ (M), 213 (M), 91 (M), 343 (M) |
 | 21 | **1D DP II** | 322★ (M), 139★ (M), 300★ LIS (M), 152 (M), 5 (M), 647 (M) |
@@ -157,17 +164,17 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 
 🏁 **Promotion review → Staff Engineer**
 
-### Phase 6: Advanced Topics (Weeks 26–29) · 🏛️ Staff
-| Week | Topic | Problems |
+### Phase 6: Advanced Topics (Units 26–29) · 🏛️ Staff
+| Unit | Topic | Problems |
 |---|---|---|
 | 26 | **Tries + Bit Manipulation** | 208★ (M), 211 (M), 212 (H), 136★ (E), 191 (E), 338 (E), 268 (E), 190 (E), 371 (M) |
 | 27 | **Monotonic Deque + Advanced Windows** | 239★ (H), 4 (H), re-solve 76 and 84 cold |
 | 28 | **Segment Tree / Fenwick Tree + String Matching (KMP idea)** | 307 (M), 315 (H), 28 (E, solved with KMP) |
 | 29 | **Hard-problem week**: mixed hards across all patterns, timed | |
 
-### Phase 7: Interview Mode (Week 30 onward)
+### Phase 7: Interview Mode (after Unit 29)
 - **Mock interviews** twice a week, with me as the interviewer (Google/Amazon style): clarifying questions, think aloud, follow-ups like "now handle a stream" or "now reduce the memory".
-- **LeetCode weekly contests** (start around Week 12 just to participate, then take them seriously from here).
+- **LeetCode weekly contests** (start around Unit 12 just to participate, then take them seriously from here).
 - **Company-tagged practice** for whichever companies you're interviewing at.
 - **Mixed random sets**, where the topic isn't revealed, because in a real interview nobody tells you it's a sliding window problem.
 - Behavioural and "explain your project" prep can be added alongside.
@@ -190,7 +197,7 @@ Data Structures And Algorithms/
 ├── templates/                 ← patterns YOU wrote: binary_search.py, bfs.py, dsu.py…
 ├── notes/                     ← short concept notes, one per topic
 └── phase1_foundations/
-    ├── week02_arrays/
+    ├── week02_arrays_strings/
     │   ├── lc0121_best_time_to_buy_sell_stock.py
     │   └── ...
 ```
@@ -223,7 +230,7 @@ Write and test locally first, then paste into LeetCode to submit. Writing your o
 ### PyCharm settings that matter
 1. **Interpreter:** project venv on Python 3.14.
 2. **File template:** *Settings → Editor → File and Code Templates* → a "LeetCode Problem" template with the skeleton above, so each new problem takes one click.
-3. **The debugger is your best teacher.** Breakpoints plus *Step Into* to watch recursion and pointers move. We'll use it heavily in Weeks 6 and 11.
+3. **The debugger is your best teacher.** Breakpoints plus *Step Into* to watch recursion and pointers move. We'll use it heavily in Units 6 and 11.
 4. **Turn AI and full-line code completion OFF for this project.** Interviews have no autocomplete, so neither does practice. Basic syntax completion is fine.
 5. **Git:** commit every day. Your GitHub contribution graph becomes a visible streak and a portfolio signal.
 
