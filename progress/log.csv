@@ -3,3 +3,4 @@ date,kind,pid,name,diff,hints,mins,xp,note
 2026-10-04,solve,1,Two Sum,E,3,53,10,
 2026-10-05,solve,344,Reverse String,E,3,42,10,
 2026-10-06,solve,26,Remove Duplicates from Sorted Array,E,3,53,10,same-direction two pointers; k-start bug on all-dupes
+2026-10-06,solve,27,Remove Element,E,3,26,10,same pattern as 26; j from 0; move-to-end misconception twice
