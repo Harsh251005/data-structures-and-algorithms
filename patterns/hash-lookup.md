@@ -18,4 +18,5 @@ for i, x in enumerate(nums):
 
 ## My traps
 - Adding before checking lets a number pair with itself (LC 1, `[3, 2, 4]`, 6).
+- Brute force inner loop starting at `1` instead of `i + 1`: same self-pairing bug, `[9, 10, 2, 3, 2]`, 4 returned `[2, 2]` (LC 1 re-solve).
 - `in` on a list looks innocent but makes the loop O(n²) (LC 217).
