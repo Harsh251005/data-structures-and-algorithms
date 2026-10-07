@@ -200,7 +200,7 @@ Only after the goal is reached. These topics rarely come up outside the toughest
 
 🏁 **Promotion review + a hard-problem mock → 🏆 Top-tier ready**
 
-**Rough total:** ~185 listed problems to the goal (Phases 0–5) plus the mixed sets and mocks of Interview Mode, ~200 with the optional stretch. About 60% medium.
+**Rough total:** 191 listed problems to the goal (Phases 0–5: 54 E · 118 M · 19 H), plus reinforcement problems and the mixed sets and mocks of Interview Mode. The optional stretch adds 14 (6 E · 4 M · 4 H) and a hard-problem week.
 
 ---
 
