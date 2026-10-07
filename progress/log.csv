@@ -6,3 +6,4 @@ date,kind,pid,name,diff,hints,mins,xp,note
 2026-10-06,solve,27,Remove Element,E,3,26,10,same pattern as 26; j from 0; move-to-end misconception twice
 2026-10-06,solve,121,Best Time to Buy and Sell Stock,E,4,54,10,[viewed] running min; kept brute-force i/j in one-pass; and-coupled updates
 2026-10-06,solve,88,Merge Sorted Array,E,3,27,10,two-pointer merge; two ifs instead of if/else; no write-back; still no assert
+2026-10-07,resolve,217,Contains Duplicate,E,,5,5,
