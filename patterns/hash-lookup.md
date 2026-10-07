@@ -15,6 +15,7 @@ for i, x in enumerate(nums):
 |---|---|
 | 217 Contains Duplicate | set; `x in set` is O(1), `x in list` is O(n) |
 | 1 Two Sum | dict value → index; look for `target - x` |
+| 169 Majority Element | dict value → count with `seen.get(x, 0) + 1`; return once a count passes n // 2 |
 
 ## My traps
 - Adding before checking lets a number pair with itself (LC 1, `[3, 2, 4]`, 6).

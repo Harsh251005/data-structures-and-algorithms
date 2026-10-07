@@ -17,9 +17,12 @@ How they're used:
 | [Two pointers, read/write](two-pointers-read-write.md) | 26, 27 |
 | [Running best-so-far](running-best-so-far.md) | 121 |
 | [Merge two sorted](merge-two-sorted.md) | 88 |
+| [Boyer-Moore voting](boyer-moore-voting.md) | 169 |
 
 ## Traps that cross patterns
 - **Tests that check only the return value.** When a problem mutates its input (344, 26, 27, 88), the
   input list is what gets judged, so assert on it.
 - **`if` + `if` vs `if / else`.** Ask: can both happen in the same step? Yes means two `if`s (121: new
   minimum and new best profit are independent). Exactly one means `if / else` (88: you take one number per step).
+- **Tests where the answer always sits in the same spot.** All the duplicates adjacent (217), the winner always
+  first (169), the low price always before the high one (121). A wrong shortcut passes them all. Move the answer around.
