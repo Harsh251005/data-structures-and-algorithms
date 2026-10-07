@@ -55,13 +55,21 @@ VIEWED_TAG = "[viewed]"
 DEFAULT_DAILY_TARGET = 2  # new problems per day, plus every re-solve that's due
 MIN_OWN_TESTS = 3  # `log` refuses until the solution file has this many tests not marked "added in review"
 
-LEVELS = [  # (min xp, icon, title)
-    (0, "🎓", "Intern"),
-    (500, "💼", "SDE-1"),
-    (1500, "🔧", "SDE-2"),
-    (3500, "🧠", "Senior SDE"),
-    (6000, "🏛️", "Staff Engineer"),
-    (9000, "👑", "Principal"),
+# Levels are earned ONLY by passing promotion reviews (3 unseen problems, 90 min, pass 2 of 3), never by XP:
+# grinding easy problems must not be able to fake a hiring-level claim. XP is the score, not the rank.
+# The hiring calibration is judgement from common interview formats, not data; it varies by company.
+LEVELS = [  # (promotion reviews passed, icon, title, what it means in hiring terms, gate to the next level)
+    (0, "🌱", "Beginner", "learning the basics; not interview-ready anywhere yet",
+     "Phase 1 review: arrays, hashing, two pointers, sliding window"),
+    (1, "🧱", "Foundations", "easy rounds and simple online assessments (array/string questions) on a good day",
+     "Phase 2 review: recursion, binary search, linked lists, stacks"),
+    (2, "⚙️", "Core", "service-company / mass-recruiter coding rounds within reach; product-company rounds not yet",
+     "Phase 3 + 4 reviews: trees, heaps, backtracking, graphs"),
+    (4, "🌲", "OA-ready", "product-company online assessments passable more often than not; no DP yet",
+     "Phase 5 review: dynamic programming"),
+    (5, "🎯", "SDE-1 Interview-ready", "the real SDE-1 DSA bar at product companies: unseen mediums in 25-35 min",
+     "Phase 6 review + final readiness review (2 back-to-back unseen mocks)"),
+    (7, "🏆", "Top-tier ready", "competitive for SDE-1 at top-tier companies; hards in core patterns ~40-50%", ""),
 ]
 
 STREAK_MILESTONES = {3, 7, 14, 21, 30, 50, 75, 100, 150, 200, 365}
@@ -293,8 +301,13 @@ def total_xp(rows: list[dict]) -> int:
     return sum(r["xp"] for r in rows)
 
 
-def level_for(xp: int) -> tuple[int, tuple]:
-    idx = max(i for i, (floor, _, _) in enumerate(LEVELS) if xp >= floor)
+def reviews_passed(rows: list[dict]) -> int:
+    return sum(1 for r in rows if r["kind"] == "promotion")
+
+
+def level_for(rows: list[dict]) -> tuple[int, tuple]:
+    passed = reviews_passed(rows)
+    idx = max(i for i, lvl in enumerate(LEVELS) if passed >= lvl[0])
     return idx, LEVELS[idx]
 
 
@@ -473,7 +486,7 @@ def dashboard() -> None:
     rows = load_log()
     today = date.today()
     xp = total_xp(rows)
-    idx, (floor, icon, title) = level_for(xp)
+    idx, (_, icon, title, means, gate) = level_for(rows)
     current, best, at_risk = streaks(rows, today)
     due, upcoming = resolve_queue(rows, today)
     day_no = (today - date.fromisoformat(state["start"])).days + 1
@@ -489,13 +502,13 @@ def dashboard() -> None:
 
     # Rank
     print("  " + rule("rank"))
+    print(f"   {icon}  {c(title, BOLD, GOLD)}   {c(f'{xp:,} XP', BOLD)}")
+    print(f"   {c('means:', GREY)} {c(means, CREAM)}")
     if idx + 1 < len(LEVELS):
-        nxt_floor, nxt_icon, nxt_title = LEVELS[idx + 1]
-        frac = (xp - floor) / (nxt_floor - floor)
-        print(f"   {icon}  {c(title, BOLD, GOLD)}   {c(f'{xp:,} XP', BOLD)}")
-        print(f"   {bar(frac)}  {c(f'{nxt_floor - xp:,} XP', CREAM)} {c('to', GREY)} {nxt_icon} {nxt_title}")
+        _, nxt_icon, nxt_title, _, _ = LEVELS[idx + 1]
+        print(f"   {c('next:', GREY)} {nxt_icon} {nxt_title} {c('· pass', GREY)} {c(gate, CREAM)}")
     else:
-        print(f"   {icon}  {c(title, BOLD, GOLD)}   {c(f'{xp:,} XP', BOLD)}   {c('max rank. go get the offer.', CREAM)}")
+        print(f"   {c('max rank. go get the offer.', CREAM)}")
     print()
 
     # Streak
@@ -592,13 +605,14 @@ def dashboard() -> None:
 def celebrate(rows_before: list[dict], gained: int, today: date) -> None:
     rows_after = load_log()
     write_tracker(rows_after)
-    before_idx, _ = level_for(total_xp(rows_before))
-    after_idx, (_, icon, title) = level_for(total_xp(rows_after))
+    before_idx, _ = level_for(rows_before)
+    after_idx, (_, icon, title, means, _) = level_for(rows_after)
     print(c(f"   +{gained} XP", BOLD, GOLD) + c(f"   ·   total {total_xp(rows_after):,} XP", GREY))
     if after_idx > before_idx:
         print()
         print(c("   ★ ★ ★  PROMOTED  ★ ★ ★", BOLD, SAFFRON))
         print(f"   {icon}  You are now {c(title, BOLD, GOLD)}. Earned, not given.")
+        print(c(f"   That means: {means}.", CREAM))
     was_active = any(r["day"] == today for r in rows_before)
     if not was_active:
         current, _, _ = streaks(rows_after, today)

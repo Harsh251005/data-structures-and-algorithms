@@ -63,15 +63,25 @@ After a viewed solution you type it from memory, it is logged with `--viewed`, a
 
 ## 2. Consistency system (fun, but professional)
 
-### Career ladder (levels = XP)
-| Level | XP | Unlocks |
-|---|---|---|
-| 🎓 Intern | 0 | Phase 0–1 |
-| 💼 SDE-1 | 500 | Phase 2 |
-| 🔧 SDE-2 | 1,500 | Phase 3–4 |
-| 🧠 Senior SDE | 3,500 | Phase 5 (DP) |
-| 🏛️ Staff Engineer | 6,000 | Phase 6 + Interview mode |
-| 👑 Principal | 9,000 | You're interview-ready |
+### Levels (earned by promotion reviews, not XP)
+Each level is a claim about what you could pass in a real hiring process, so it can only be earned by passing a
+**promotion review** (3 unseen problems, 90 minutes, me as the interviewer, pass 2 of 3). XP is the score that
+rewards showing up. It never changes your level, because grinding easy problems can't prove an interview skill.
+
+| Level | Earned by passing | What you can do | What it means for hiring | Not there yet |
+|---|---|---|---|---|
+| 🌱 Beginner | (start) | Learning arrays, strings and Big-O | Not interview-ready anywhere yet. Normal at this stage | Everything below |
+| 🧱 Foundations | Phase 1 review | Easys reliably; mediums on arrays, hashing, two pointers and sliding window, slowly | Easy coding rounds and simple online assessments (array/string questions) on a good day | Recursion, binary search, linked lists, stacks, trees, graphs, DP |
+| ⚙️ Core | Phase 2 review | Recursion, binary search, linked lists, stacks; standard mediums with time to spare on familiar patterns | Service-company and mass-recruiter coding rounds within reach | Trees, graphs and DP, which product companies ask constantly |
+| 🌲 OA-ready | Phase 3 + 4 reviews | Trees, heaps, backtracking, graphs | Product-company online assessments (2-3 problems, 60-90 min) passable more often than not | DP, and speed on unseen mediums |
+| 🎯 SDE-1 Interview-ready | Phase 5 review | Unseen mediums in 25-35 min across all core patterns including DP, explained out loud | **The real SDE-1 DSA bar at product companies and MNCs.** Apply with confidence | Hards, and consistency at top-tier companies |
+| 🏆 Top-tier ready | Phase 6 review + final readiness review | Everything above, plus hards in the core patterns ~40-50% of the time | Competitive for SDE-1 at top-tier companies; SDE-2 DSA rounds within reach | System design and behavioural rounds (outside this roadmap) |
+
+**Final readiness review:** two back-to-back mock interviews on unseen problems (a medium and a medium/hard),
+graded on the exit criteria at the top of this file. Logged as a promotion review only if both are passed.
+
+> Honest calibration: the hiring column is my judgement from common interview formats, not data. Bars vary a lot
+> between companies, and a strong DSA level doesn't replace system design, projects or behavioural prep.
 
 **XP:** Easy 10 · Medium 25 · Hard 60 · Solved with no hints +5 · Spaced re-solve 5 · Friday Gauntlet / weekly mock 40 · Promotion review passed 100
 
@@ -108,7 +118,7 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 - **Big-O**: O(1), O(log n), O(n), O(n log n), O(n²), O(2ⁿ). How to read code and state its complexity. Space complexity. Why `x in list` is O(n) and `x in set` is O(1)
 - Practice: 15 short "what's the complexity?" snippets I'll give you, plus 1 ★Two Sum (E), 217 Contains Duplicate (E), 344 Reverse String (E)
 
-### Phase 1: Foundations (Units 2–5) · 🎓 Intern
+### Phase 1: Foundations (Units 2–5) · 🌱 Beginner
 | Unit | Topic | Problems |
 |---|---|---|
 | 2 | **Arrays & Strings** | 26 (E), 27 (E), 88 (E), 121★ (E), 169 (E), 14 (E), 125 (E), 387 (E), 189 (M), 238★ (M) |
@@ -116,9 +126,9 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 | 4 | **Two Pointers** | 283 (E), 977 (E), 167★ (M), 15★ (M), 11★ (M), 75 (M), 42★ (H) |
 | 5 | **Sliding Window + Prefix Sum** | 643 (E), 724 (E), 303 (E), 3★ (M), 209 (M), 1004 (M), 424★ (M), 567★ (M), 525 (M), 974 (M), 76★ (H) |
 
-🏁 **Promotion review → SDE-1**
+🏁 **Promotion review → 🧱 Foundations**
 
-### Phase 2: Core Techniques (Units 6–10) · 💼 SDE-1
+### Phase 2: Core Techniques (Units 6–10) · 🧱 Foundations
 | Unit | Topic | Problems |
 |---|---|---|
 | 6 | **Recursion** (call stack, base case, trust the recursion), trained with the debugger | 509 (E), 231 (E), 50 (M), recursive 206 (E), 21 (E), and I'll give you print-all-subsets |
@@ -127,9 +137,9 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 | 9 | **Stacks, Queues, Monotonic Stack** | 20★ (E), 232 (E), 496 (E), 155★ (M), 150 (M), 394 (M), 739★ (M), 503 (M), 901 (M), 853 (M), 84★ (H) |
 | 10 | **Consolidation**: 138 (M), 146★ LRU Cache (M), 215 (M), 56★ (M), 179 (M), 23 (H), 25 (H), plus re-solves of weak spots | |
 
-🏁 **Promotion review → SDE-2**
+🏁 **Promotion review → ⚙️ Core**
 
-### Phase 3: Trees, Heaps, Backtracking (Units 11–15) · 🔧 SDE-2
+### Phase 3: Trees, Heaps, Backtracking (Units 11–15) · ⚙️ Core
 | Unit | Topic | Problems |
 |---|---|---|
 | 11 | **Binary Trees I**: traversals (recursive and iterative), DFS vs BFS | 94, 144, 145 (E), 104★ (E), 226★ (E), 100 (E), 101 (E), 112 (E), 102★ (M), 103 (M), 199★ (M) |
@@ -140,7 +150,7 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 
 🏁 **Promotion review** (checkpoint, no level change)
 
-### Phase 4: Graphs (Units 16–19) · 🔧 SDE-2
+### Phase 4: Graphs (Units 16–19) · ⚙️ Core
 | Unit | Topic | Problems |
 |---|---|---|
 | 16 | **Graph basics**: adjacency lists, BFS/DFS, grids as graphs | 1971 (E), 733 (E), 200★ (M), 695 (M), 841 (M), 133★ (M), 547 (M), 130 (M) |
@@ -148,9 +158,9 @@ Each session in this folder, I open with: **Day N · streak · XP · today's tas
 | 18 | **Union-Find** (path compression + union by rank) | 684★ (M), 721 (M), 990 (M), plus 547 re-solved with DSU |
 | 19 | **Shortest Paths + MST**: Dijkstra, Bellman-Ford idea, Prim/Kruskal | 743★ (M), 787★ (M), 1584★ (M), 778 (H), 332 (H) |
 
-🏁 **Promotion review → Senior SDE**
+🏁 **Promotion review → 🌲 OA-ready** (needs the Phase 3 review too)
 
-### Phase 5: Dynamic Programming (Units 20–25) · 🧠 Senior SDE
+### Phase 5: Dynamic Programming (Units 20–25) · 🌲 OA-ready
 The big one. Method: **recursion → memoization → tabulation → space-optimised**, done in that order for every problem in the first two units.
 
 | Unit | Topic | Problems |
@@ -162,9 +172,9 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 | 24 | **String DP** | 1143★ LCS (M), 72★ Edit Distance (M), 97 (M), 115 (H), 10 (H) |
 | 25 | **State-machine / Tree / Interval DP** | 309 (M), 337 (M), 1235 (H), 312 (H) |
 
-🏁 **Promotion review → Staff Engineer**
+🏁 **Promotion review → 🎯 SDE-1 Interview-ready**
 
-### Phase 6: Advanced Topics (Units 26–29) · 🏛️ Staff
+### Phase 6: Advanced Topics (Units 26–29) · 🎯 SDE-1 Interview-ready
 | Unit | Topic | Problems |
 |---|---|---|
 | 26 | **Tries + Bit Manipulation** | 208★ (M), 211 (M), 212 (H), 136★ (E), 191 (E), 338 (E), 268 (E), 190 (E), 371 (M) |
@@ -172,7 +182,10 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 | 28 | **Segment Tree / Fenwick Tree + String Matching (KMP idea)** | 307 (M), 315 (H), 28 (E, solved with KMP) |
 | 29 | **Hard-problem week**: mixed hards across all patterns, timed | |
 
+🏁 **Promotion review** (counts towards 🏆 Top-tier ready)
+
 ### Phase 7: Interview Mode (after Unit 29)
+- **Final readiness review → 🏆 Top-tier ready**: two back-to-back unseen mocks, graded on the exit criteria. Retake after a revision sprint if either is failed.
 - **Mock interviews** twice a week, with me as the interviewer (Google/Amazon style): clarifying questions, think aloud, follow-ups like "now handle a stream" or "now reduce the memory".
 - **LeetCode weekly contests** (start around Unit 12 just to participate, then take them seriously from here).
 - **Company-tagged practice** for whichever companies you're interviewing at.

@@ -10,7 +10,7 @@ My DSA journey from zero to MNC-interview level, in Python, one day at a time.
 
 ## DSA Forge
 
-`dsa.py` is the tracker that keeps me showing up. It has XP, career ranks (Intern → Principal), a streak with a "never miss twice" rule, an activity heatmap, and a spaced re-solve queue. The roadmap moves in **units** at my own pace: a unit ends when its problem list is done, and the dashboard estimates the dates from my last 7 days. `log` refuses a problem until its file has at least 3 tests I wrote myself (cases marked `added in review` don't count). Friday to Sunday the dashboard shows the **Friday Gauntlet**: 2 cold re-solves from the week, no hints.
+`dsa.py` is the tracker that keeps me showing up. It has XP, levels that mean something in hiring terms (Beginner → Top-tier ready, earned only by passing promotion reviews, never by XP), a streak with a "never miss twice" rule, an activity heatmap, and a spaced re-solve queue. The roadmap moves in **units** at my own pace: a unit ends when its problem list is done, and the dashboard estimates the dates from my last 7 days. `log` refuses a problem until its file has at least 3 tests I wrote myself (cases marked `added in review` don't count). Friday to Sunday the dashboard shows the **Friday Gauntlet**: 2 cold re-solves from the week, no hints.
 
 ```bash
 python dsa.py                                   # dashboard

@@ -3,6 +3,7 @@
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
 ## 2026-10-07
+- **Honest levels.** Intern → Principal is replaced by Beginner → Foundations → Core → OA-ready → SDE-1 Interview-ready → Top-tier ready. Each level states what it means for hiring and what's still missing, and it is earned only by passing promotion reviews (`dsa.py event promotion`), never by XP. The dashboard shows what the current level means and the gate to the next one.
 - **Cold re-solve files.** Re-solves are typed into a fresh file in `resolve/` (gitignored), so the original solution stays out of sight. The scratch file is deleted after `dsa.py resolve`.
 
 ## 2026-10-06
