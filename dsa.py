@@ -63,16 +63,18 @@ LEVELS = [  # (promotion reviews passed, icon, title, what it means in hiring te
      "Phase 1 review: arrays, hashing, two pointers, sliding window"),
     (1, "🧱", "Foundations", "easy rounds and simple online assessments (array/string questions) on a good day",
      "Phase 2 review: recursion, binary search, linked lists, stacks"),
-    (2, "⚙️", "Core", "service-company / mass-recruiter coding rounds within reach; product-company rounds not yet",
+    (2, "⚙️", "Core", "easier online assessments and service-company coding rounds within reach; product companies not yet",
      "Phase 3 + 4 reviews: trees, heaps, backtracking, graphs"),
-    (4, "🌲", "OA-ready", "product-company online assessments passable more often than not; no DP yet",
-     "Phase 5 review: dynamic programming"),
-    (5, "🎯", "SDE-1 Interview-ready", "the real SDE-1 DSA bar at product companies: unseen mediums in 25-35 min",
-     "Phase 6 review + final readiness review (2 back-to-back unseen mocks)"),
-    (7, "🏆", "Top-tier ready", "competitive for SDE-1 at top-tier companies; hards in core patterns ~40-50%", ""),
+    (4, "🌲", "OA-ready", "most online assessments passable more often than not; no DP yet",
+     "Phase 5 review (DP) + final readiness review (2 back-to-back unseen mediums)"),
+    (6, "🎯", "Interview-ready", "THE GOAL: unseen mediums in 25-35 min, the DSA round at most companies",
+     "optional: Phase 7 review + a hard-problem mock"),
+    (8, "🏆", "Top-tier ready", "optional stretch: hards in core patterns ~40-50%, the toughest DSA loops", ""),
 ]
 
 STREAK_MILESTONES = {3, 7, 14, 21, 30, 50, 75, 100, 150, 200, 365}
+
+GOAL_LAST_UNIT = 25  # DP ends here; Interview Mode follows, Units 26+ are the optional stretch
 
 RESOLVE_CAP = 4  # this many re-solves due at the start of a day drops that day's new target to 1
 QUALITY_HINTS = 3.0  # a unit averaging this many hints needs reinforcement problems before it counts as done
@@ -553,13 +555,15 @@ def dashboard() -> None:
             later = [u for u in UNITS if u > unit]
             left_phase = left_unit + sum(len(unit_problems(u, state)) or UNLISTED_UNIT_SIZE
                                          for u in later if UNITS[u][0].startswith(phase))
-            left_all = left_unit + sum(len(unit_problems(u, state)) or UNLISTED_UNIT_SIZE for u in later)
+            left_goal = left_unit + sum(len(unit_problems(u, state)) or UNLISTED_UNIT_SIZE
+                                        for u in later if u <= GOAL_LAST_UNIT)
             nxt = unit_info(unit + 1)[1]
             phase_name = phase.split("_")[0].replace("phase", "Phase ")
             print(f"   {c('pace', GREY)} {per_day:.1f} new/day   {c('│', GREY)}   "
                   f"{c('next:', GREY)} {c(nxt, CREAM)} ~{eta(left_unit, per_day, today):%a %d %b}")
             print(f"   {c(phase_name + ' done', GREY)} ~{eta(left_phase, per_day, today):%d %b}   {c('│', GREY)}   "
-                  f"{c('full roadmap', GREY)} ~{eta(left_all, per_day, today):%b %Y}")
+                  f"{c('🎯 goal units', GREY)} ~{eta(left_goal, per_day, today):%b %Y}"
+                  + c("  (+ Interview Mode)", GREY))
     else:
         print(f"   {c(topic, BOLD, GOLD)}: mocks, contests, company-tagged sets")
     week_rows = [r for r in rows if (today - r["day"]).days < 7]

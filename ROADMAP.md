@@ -1,12 +1,18 @@
-# DSA Roadmap: Zero → MNC Interview Ready
+# DSA Roadmap: Zero → Interview Ready
 
 **Learner:** Harsh · **Language:** Python 3.14 · **Editor:** PyCharm · **Started:** 2026-10-04
-**Pace:** ~2 h/day, 6 days/week · **Length:** set by your pace. The dashboard's ROADMAP section shows live estimates (next unit, phase end, full roadmap) from your last 7 days
+**Pace:** ~2 h/day, 6 days/week · **Length:** set by your pace. The dashboard's ROADMAP section shows live estimates (next unit, phase end, the 🎯 goal units) from your last 7 days
 
-**Exit criteria.** You're done when, on unseen problems, you can do the following:
-- Solve a **medium** in 25–35 minutes while talking through your approach, the way you would with an interviewer.
-- Solve **hards** in the core patterns (sliding window, DP, graphs, heaps) roughly 40–50% of the time.
+**Scope:** DSA only. The target is applied engineering roles, where the DSA round is the gate; ML theory, system
+design and behavioural prep are outside this folder.
+
+**The goal (🎯 Interview-ready).** On unseen problems, you can:
+- Solve any **medium** in 25–35 minutes while talking through your approach, the way you would with an interviewer.
 - State the time and space complexity of any solution without hesitating.
+- That is the DSA bar at most companies (the aim is ~90%). It's proved by the final readiness review, not by a count.
+
+**Optional stretch (🏆 Top-tier ready):** hards in the core patterns (sliding window, DP, graphs, heaps) roughly
+40–50% of the time, for the small set of companies whose loops go beyond mediums.
 
 > Honest calibration: the timeline is an estimate, not a promise. Most people reach "mediums are comfortable" after roughly 250–350 well-reviewed problems. Solving 600 problems carelessly gets you there slower than solving 300 carefully. The plan adjusts to your actual pace.
 
@@ -72,16 +78,17 @@ rewards showing up. It never changes your level, because grinding easy problems 
 |---|---|---|---|---|
 | 🌱 Beginner | (start) | Learning arrays, strings and Big-O | Not interview-ready anywhere yet. Normal at this stage | Everything below |
 | 🧱 Foundations | Phase 1 review | Easys reliably; mediums on arrays, hashing, two pointers and sliding window, slowly | Easy coding rounds and simple online assessments (array/string questions) on a good day | Recursion, binary search, linked lists, stacks, trees, graphs, DP |
-| ⚙️ Core | Phase 2 review | Recursion, binary search, linked lists, stacks; standard mediums with time to spare on familiar patterns | Service-company and mass-recruiter coding rounds within reach | Trees, graphs and DP, which product companies ask constantly |
+| ⚙️ Core | Phase 2 review | Recursion, binary search, linked lists, stacks; standard mediums on familiar patterns, slowly | Easier online assessments and service-company coding rounds within reach | Trees, graphs and DP, which product companies ask constantly |
 | 🌲 OA-ready | Phase 3 + 4 reviews | Trees, heaps, backtracking, graphs | Product-company online assessments (2-3 problems, 60-90 min) passable more often than not | DP, and speed on unseen mediums |
-| 🎯 SDE-1 Interview-ready | Phase 5 review | Unseen mediums in 25-35 min across all core patterns including DP, explained out loud | **The real SDE-1 DSA bar at product companies and MNCs.** Apply with confidence | Hards, and consistency at top-tier companies |
-| 🏆 Top-tier ready | Phase 6 review + final readiness review | Everything above, plus hards in the core patterns ~40-50% of the time | Competitive for SDE-1 at top-tier companies; SDE-2 DSA rounds within reach | System design and behavioural rounds (outside this roadmap) |
+| 🎯 **Interview-ready (the goal)** | Phase 5 review + final readiness review | Unseen mediums in 25-35 min across all core patterns including DP, explained out loud | **The DSA round at most companies (aim: ~90%).** Apply with confidence | Hards, which only the toughest loops need |
+| 🏆 Top-tier ready (optional) | Phase 7 review + a hard-problem mock | Everything above, plus hards in the core patterns ~40-50% of the time | The DSA rounds at the toughest top-tier companies | Nothing left in DSA |
 
-**Final readiness review:** two back-to-back mock interviews on unseen problems (a medium and a medium/hard),
-graded on the exit criteria at the top of this file. Logged as a promotion review only if both are passed.
+**Final readiness review (the gate to the goal):** two back-to-back mock interviews on unseen mediums from mixed
+patterns, each solved in 35 minutes or less while explaining out loud, with correct complexity. Logged as a
+promotion review only if both are passed.
 
-> Honest calibration: the hiring column is my judgement from common interview formats, not data. Bars vary a lot
-> between companies, and a strong DSA level doesn't replace system design, projects or behavioural prep.
+> Honest calibration: the hiring column is my judgement from common interview formats and public interview reports,
+> not measured data. "~90% of companies" is the aim, not a statistic, and bars vary between companies.
 
 **XP:** Easy 10 · Medium 25 · Hard 60 · Solved with no hints +5 · Spaced re-solve 5 · Friday Gauntlet / weekly mock 40 · Promotion review passed 100
 
@@ -172,9 +179,18 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 | 24 | **String DP** | 1143★ LCS (M), 72★ Edit Distance (M), 97 (M), 115 (H), 10 (H) |
 | 25 | **State-machine / Tree / Interval DP** | 309 (M), 337 (M), 1235 (H), 312 (H) |
 
-🏁 **Promotion review → 🎯 SDE-1 Interview-ready**
+🏁 **Promotion review** (counts towards 🎯 Interview-ready, with the final readiness review)
 
-### Phase 6: Advanced Topics (Units 26–29) · 🎯 SDE-1 Interview-ready
+### Phase 6: Interview Mode (after Unit 25) · 🌲 OA-ready
+Runs until the final readiness review is passed. Units 26+ wait until then.
+- **Final readiness review → 🎯 Interview-ready (the goal)**: two back-to-back unseen mediums, mixed patterns, 35 minutes each, explained out loud. Retake after a revision sprint if either is failed.
+- **Mock interviews** twice a week, with me as the interviewer: clarifying questions, think aloud, follow-ups like "now handle a stream" or "now reduce the memory".
+- **LeetCode weekly contests** (start around Unit 12 just to participate, then take them seriously from here).
+- **Company-tagged practice** for whichever companies you're interviewing at.
+- **Mixed random sets**, where the topic isn't revealed, because in a real interview nobody tells you it's a sliding window problem.
+
+### Phase 7: Advanced Topics, optional stretch (Units 26–29) · 🎯 Interview-ready
+Only after the goal is reached. These topics rarely come up outside the toughest loops.
 | Unit | Topic | Problems |
 |---|---|---|
 | 26 | **Tries + Bit Manipulation** | 208★ (M), 211 (M), 212 (H), 136★ (E), 191 (E), 338 (E), 268 (E), 190 (E), 371 (M) |
@@ -182,17 +198,9 @@ The big one. Method: **recursion → memoization → tabulation → space-optimi
 | 28 | **Segment Tree / Fenwick Tree + String Matching (KMP idea)** | 307 (M), 315 (H), 28 (E, solved with KMP) |
 | 29 | **Hard-problem week**: mixed hards across all patterns, timed | |
 
-🏁 **Promotion review** (counts towards 🏆 Top-tier ready)
+🏁 **Promotion review + a hard-problem mock → 🏆 Top-tier ready**
 
-### Phase 7: Interview Mode (after Unit 29)
-- **Final readiness review → 🏆 Top-tier ready**: two back-to-back unseen mocks, graded on the exit criteria. Retake after a revision sprint if either is failed.
-- **Mock interviews** twice a week, with me as the interviewer (Google/Amazon style): clarifying questions, think aloud, follow-ups like "now handle a stream" or "now reduce the memory".
-- **LeetCode weekly contests** (start around Unit 12 just to participate, then take them seriously from here).
-- **Company-tagged practice** for whichever companies you're interviewing at.
-- **Mixed random sets**, where the topic isn't revealed, because in a real interview nobody tells you it's a sliding window problem.
-- Behavioural and "explain your project" prep can be added alongside.
-
-**Rough total:** ~300 problems, about 60% medium, 15% hard.
+**Rough total:** ~185 listed problems to the goal (Phases 0–5) plus the mixed sets and mocks of Interview Mode, ~200 with the optional stretch. About 60% medium.
 
 ---
 
