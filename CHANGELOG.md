@@ -3,6 +3,7 @@
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
 ## 2026-10-07
+- Google Sheet: Summary's Total XP now includes re-solve XP (it showed 85 while the dashboard showed 100). README and the ROADMAP's calibration note now match the 191-problem goal.
 - **Re-aimed at the real goal: DSA only, any medium in 25–35 minutes.** 🎯 Interview-ready is the goal level, gated by the Phase 5 review plus a final readiness review (2 back-to-back unseen mediums). Interview Mode moves up to Phase 6, right after DP. Advanced topics (tries, segment trees, hard week) become an optional Phase 7 stretch towards 🏆 Top-tier ready. SDE-specific wording and non-DSA prep are removed.
 - **Honest levels.** Intern → Principal is replaced by Beginner → Foundations → Core → OA-ready → SDE-1 Interview-ready → Top-tier ready. Each level states what it means for hiring and what's still missing, and it is earned only by passing promotion reviews (`dsa.py event promotion`), never by XP. The dashboard shows what the current level means and the gate to the next one.
 - **Cold re-solve files.** Re-solves are typed into a fresh file in `resolve/` (gitignored), so the original solution stays out of sight. The scratch file is deleted after `dsa.py resolve`.

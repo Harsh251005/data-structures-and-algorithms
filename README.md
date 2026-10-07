@@ -1,6 +1,6 @@
 # Data Structures & Algorithms
 
-My DSA journey from zero to MNC-interview level, in Python, one day at a time.
+My DSA journey from zero to interview-ready (any unseen medium in 25–35 minutes), in Python, one day at a time.
 
 - **[ROADMAP.md](ROADMAP.md)**: the plan, from Big-O through graphs and DP to mock interviews
 - **`phase*/week*/`**: my solutions, one file per problem, each with its approach, complexity and test cases

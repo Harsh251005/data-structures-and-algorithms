@@ -14,7 +14,7 @@ design and behavioural prep are outside this folder.
 **Optional stretch (🏆 Top-tier ready):** hards in the core patterns (sliding window, DP, graphs, heaps) roughly
 40–50% of the time, for the small set of companies whose loops go beyond mediums.
 
-> Honest calibration: the timeline is an estimate, not a promise. Most people reach "mediums are comfortable" after roughly 250–350 well-reviewed problems. Solving 600 problems carelessly gets you there slower than solving 300 carefully. The plan adjusts to your actual pace.
+> Honest calibration: the timeline is an estimate, not a promise. This plan lists 191 problems to the goal; with reinforcement problems, re-solves and Interview Mode's mixed sets, expect roughly 250 well-reviewed problems in total. Solving 600 problems carelessly gets you there slower than solving 250 carefully. The plan adjusts to your actual pace.
 
 ### Units, not calendar weeks (2026-10-06)
 The curriculum below is split into **units** (numbered like the old weeks). A unit ends when its problem list is done, whether that takes 3 days or 9. `python dsa.py next` sets up the next problem in the list, and the next unit starts by itself when the current one is finished.
