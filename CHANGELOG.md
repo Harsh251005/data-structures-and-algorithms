@@ -2,6 +2,9 @@
 
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
+## 2026-10-07
+- **Cold re-solve files.** Re-solves are typed into a fresh file in `resolve/` (gitignored), so the original solution stays out of sight. The scratch file is deleted after `dsa.py resolve`.
+
 ## 2026-10-06
 - **Units replace calendar weeks.** Each unit is a problem list. It ends when the list is done, and the next unit starts by itself. `dsa.py next` sets up the next problem, and `dsa.py unit` replaces `week`.
 - **Pace-based dates.** The dashboard's ROADMAP section estimates the next unit, the phase end and the full roadmap from the last 7 days' pace.
