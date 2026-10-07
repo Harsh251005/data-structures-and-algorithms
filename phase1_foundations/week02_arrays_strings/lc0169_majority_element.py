@@ -52,7 +52,7 @@ class Solution:
         return 0
 
     def majorityElementOptimal(self, nums: list[int]) -> int:
-        candidate = None
+        candidate = nums[0]
         count = 0
 
         for num in nums:
