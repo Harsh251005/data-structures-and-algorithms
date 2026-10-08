@@ -3,6 +3,8 @@
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
 ## 2026-10-08
+- **LeetCode submit gate.** After each new problem I ask him to submit on LeetCode, and the next problem waits until he confirms.
+- **Diff check before commits.** I check `git status`/`git diff` before every commit, stage only my own changes, and ask about any file he has edited.
 - **Re-solves pass the tests gate too.** `dsa.py resolve` refuses until the `resolve/` file has 3 tests of your own, and `dsa.py check` reads the `resolve/` file first when one is open. Before, `check` counted the original solution file, so a re-solve with zero asserts passed.
 
 ## 2026-10-07
