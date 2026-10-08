@@ -8,9 +8,10 @@ Key insight: in-place means mutate the list you were given. `s = s[::-1]`
              only rebinds the local name, so the caller's list never changes.
 Brute force: copy s reversed (s[::-1]) and write it back element by element:
              O(n) time, O(n) space for the copy.
-Alt: Python's swap without temp: s[i], s[j] = s[j], s[i]
-Note: `i <= j` works, but `i < j` is enough. When i == j it swaps the middle
-      element with itself.
+Alt: swap through a temp variable (temp = s[i]; s[i] = s[j]; s[j] = temp). The first
+     version did this; the tuple swap is the Python idiom.
+Note: `i <= j` also works (the first version used it), but `i < j` is enough. When
+      i == j it would only swap the middle element with itself.
 Time: O(n)   Space: O(1)
 Hints used: 3 (ChatGPT "how to reverse", in-place fix, two-pointer nudge)   Time taken: ~42 min
 """
