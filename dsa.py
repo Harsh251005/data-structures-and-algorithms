@@ -5,7 +5,7 @@ DSA Forge: your daily DSA progress tracker.
     python dsa.py                                   dashboard
     python dsa.py log 121 E --mins 14 --hints 0     log a solved problem
     python dsa.py log 121 E --hints 3 --viewed      solution viewed: re-solve tomorrow, then +3/+7/+21d
-    python dsa.py resolve 121                       log a spaced re-solve
+    python dsa.py resolve 121                       log a spaced re-solve (resolve/ file needs 3 tests)
     python dsa.py event mock | promotion            log a mock / passed promotion review
     python dsa.py next                              set up the next problem of the current unit
     python dsa.py new 121 "Best Time to Buy and Sell Stock" E
@@ -16,7 +16,8 @@ DSA Forge: your daily DSA progress tracker.
     python dsa.py unit [next]                       show the current unit (it advances by itself)
     python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves;
                                                     1 new on days that start with 4+ re-solves due)
-    python dsa.py check 121                         count your own tests (log needs 3)
+    python dsa.py check 121                         count your own tests (log and resolve need 3;
+                                                    checks resolve/ first when a re-solve is open)
     python dsa.py undo                              remove the last log entry
 
 Standard library only. Data lives in progress/ (log.csv, state.json, journal.md).
@@ -672,6 +673,12 @@ def cmd_resolve(args) -> None:
     solve = next((r for r in rows if r["kind"] == "solve" and r["pid"] == pid), None)
     if not solve:
         sys.exit(c(f"LC {pid} was never logged as solved. Use: python dsa.py log {pid} <E|M|H>", GOLD))
+    path = resolve_file(pid)
+    own = own_test_count(path) if path else 0
+    if own < MIN_OWN_TESTS:
+        where = f"resolve/{path.name}" if path else "no file in resolve/"
+        sys.exit(c(f"LC {pid} re-solve ({where}) has {own} test(s) of your own, need {MIN_OWN_TESTS}. "
+                   "Write the missing ones yourself; cases marked 'added in review' don't count.", GOLD))
     done = sum(1 for r in rows if r["kind"] == "resolve" and r["pid"] == pid)
     append_log({"date": date.today().isoformat(), "kind": "resolve", "pid": pid, "name": solve["name"],
                 "diff": solve["diff"], "xp": XP_RESOLVE, "mins": args.mins or "", "note": args.note or ""})
@@ -694,12 +701,14 @@ def cmd_event(args) -> None:
 
 
 def cmd_check(args) -> None:
-    path = solution_file(str(args.pid))
+    """Checks the re-solve file in resolve/ when one exists, otherwise the solution file."""
+    path = resolve_file(str(args.pid)) or solution_file(str(args.pid))
     if not path:
         sys.exit(c(f"No solution file for LC {args.pid}.", GOLD))
     own = own_test_count(path)
     ok = own >= MIN_OWN_TESTS
-    print(c(f"   {'✔' if ok else '✘'} LC {args.pid}: {own} test(s) of your own (need {MIN_OWN_TESTS})", BOLD, GREEN if ok else RED))
+    label = f"LC {args.pid} re-solve" if path.parent.name == "resolve" else f"LC {args.pid}"
+    print(c(f"   {'✔' if ok else '✘'} {label}: {own} test(s) of your own (need {MIN_OWN_TESTS})", BOLD, GREEN if ok else RED))
     if not ok:
         sys.exit(1)
 
@@ -767,9 +776,17 @@ def find_problem_name(pid: str) -> str | None:
     return None
 
 
+def _file_pattern(pid: str) -> str:
+    return f"lc{int(pid):04d}_*.py" if pid.isdigit() else f"lc{slugify(pid)}_*.py"
+
+
 def solution_file(pid: str) -> Path | None:
-    pattern = f"lc{int(pid):04d}_*.py" if pid.isdigit() else f"lc{slugify(pid)}_*.py"
-    return next(iter(sorted(ROOT.glob(f"phase*/**/{pattern}"))), None)
+    return next(iter(sorted(ROOT.glob(f"phase*/**/{_file_pattern(pid)}"))), None)
+
+
+def resolve_file(pid: str) -> Path | None:
+    """The cold re-solve scratch file in resolve/, if one is in progress."""
+    return next(iter(sorted((ROOT / "resolve").glob(_file_pattern(pid)))), None)
 
 
 def own_test_count(path: Path) -> int:

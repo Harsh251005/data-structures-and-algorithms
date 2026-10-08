@@ -2,6 +2,9 @@
 
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
+## 2026-10-08
+- **Re-solves pass the tests gate too.** `dsa.py resolve` refuses until the `resolve/` file has 3 tests of your own, and `dsa.py check` reads the `resolve/` file first when one is open. Before, `check` counted the original solution file, so a re-solve with zero asserts passed.
+
 ## 2026-10-07
 - Google Sheet: Summary's Total XP now includes re-solve XP (it showed 85 while the dashboard showed 100). README and the ROADMAP's calibration note now match the 191-problem goal.
 - **Re-aimed at the real goal: DSA only, any medium in 25–35 minutes.** 🎯 Interview-ready is the goal level, gated by the Phase 5 review plus a final readiness review (2 back-to-back unseen mediums). Interview Mode moves up to Phase 6, right after DP. Advanced topics (tries, segment trees, hard week) become an optional Phase 7 stretch towards 🏆 Top-tier ready. SDE-specific wording and non-DSA prep are removed.
