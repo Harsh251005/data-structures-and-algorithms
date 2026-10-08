@@ -22,3 +22,5 @@ return candidate               # only safe because a majority is guaranteed
 - Forgetting the `return` at the end, so the function returns `None` (LC 169).
 - Thinking the vote that empties the stage takes it over. It's used up in the cancel; the **next** vote takes the stage (LC 169).
 - Brute force: an inner loop from `i + 1` counts every value one short, so `[5]` fails (LC 169).
+- Picking a new candidate in an `elif` chain without counting its own vote: `count` never leaves 0, so the answer is
+  always the last element. Tests that all end with the majority pass anyway; test `[3, 3, 4]` (LC 169 re-solve).

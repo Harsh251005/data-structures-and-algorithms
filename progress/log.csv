@@ -11,3 +11,4 @@ date,kind,pid,name,diff,hints,mins,xp,note
 2026-10-07,resolve,121,Best Time to Buy and Sell Stock,E,,10,5,
 2026-10-07,solve,169,Majority Element,E,4,36,10,"[viewed] Brute + hash map himself; Boyer-Moore attempt 2 fixes away (candidate==0 vs count==0, no return), solution viewed"
 2026-10-08,resolve,344,Reverse String,E,,6,5,"cold, 0 hints, two-pointer swap; asserts on mutated s only after being asked; missed single-element case"
+2026-10-08,resolve,169,Majority Element,E,,26,5,"cold, 1 hint (trace table: count never left 0, candidate = last element); 1st attempt passed own tests only because each ended with the majority; had an invalid input [1,2,3,1]"
