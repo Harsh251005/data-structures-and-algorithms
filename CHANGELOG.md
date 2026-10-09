@@ -2,6 +2,9 @@
 
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
+## 2026-10-09
+- **Re-solves skip the approach line.** The original solution file already has it; a re-solve needs only working code plus 3 tests of your own.
+
 ## 2026-10-08
 - **Re-solves are hint-free.** A cold re-solve gets no hints at the hint mark or on request; the 30/45/60-min solution mark is the only safety net, as in the Gauntlet.
 - **LeetCode submit gate.** After each new problem I ask him to submit on LeetCode, and the next problem waits until he confirms.

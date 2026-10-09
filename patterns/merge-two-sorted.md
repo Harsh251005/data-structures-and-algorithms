@@ -22,3 +22,6 @@ out += a[i:] + b[j:]           # leftovers, after the loop
 - Two `if`s instead of `if / else`: the second compare saw the already-moved pointer (LC 88).
 - Leftovers handled inside the loop with `if nums1:` (always true for a non-empty list) (LC 88).
 - Forgetting to write back to `nums1`, the only thing LeetCode checks (LC 88).
+- Testing an in-place function: keep the list in your own variable, call, then assert on that variable. `assert s == ...` checks the Solution object (LC 88 re-solve).
+- `m` counts the real values, not the zero slots; `len(nums1) == m + n`, and the expected output has no zeros (LC 88 re-solve).
+- Spread the tests: make sure one case leaves leftovers in EACH input, or one leftover loop never runs (LC 88 re-solve).
