@@ -19,4 +19,5 @@ for x in nums:
 - Carrying the brute force's `i`/`j` into the one-pass version. The variable *replaces* `i` (LC 121).
 - Starting the minimum at 0: nothing is ever smaller, so it never updates. Use `inf` (LC 121).
 - Joining the two updates with `and`: they never happen on the same step (LC 121).
+- Re-solve history (LC 121): 54 min + viewed (10-06) → 10 min cold (10-07) → 6 min cold, 0 hints (10-10). His own tests now include a high-before-low case ([7,1,5,3,6,4]).
 - **Needed:** a trace table (day by day) is what made it click. Draw one when stuck.
