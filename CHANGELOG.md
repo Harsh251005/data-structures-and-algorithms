@@ -2,6 +2,9 @@
 
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
+## 2026-10-10
+- **`.codex/` is ignored.** Codex's local folder stays out of the public repo.
+
 ## 2026-10-09
 - **Re-solves skip the approach line.** The original solution file already has it; a re-solve needs only working code plus 3 tests of your own.
 
