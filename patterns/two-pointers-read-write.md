@@ -23,3 +23,7 @@ return i                       # k
 - `i = j` instead of `i += 1` (LC 26).
 - Moving `j` by hand inside a `for` loop that already moves it gives an IndexError (LC 26).
 - A counter set only inside the loop stays wrong when the body never runs (`[7]`, `[1, 1, 1]`, LC 26).
+- **Flipped the keep condition** (`==` instead of `!=`) on the 27 cold re-solve (2026-10-11), and the asserts carried the same
+  misread, so everything passed. Then fixed only the return (`len - count`) and left `nums` wrong. `i` already IS `k`.
+- **No assert on `nums[:k]`**: the asserts checked only `k`, so a correct `k` with garbage in `nums` passed. Always assert
+  `sorted(nums[:k]) == expected` too.
