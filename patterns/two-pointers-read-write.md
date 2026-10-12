@@ -27,3 +27,7 @@ return i                       # k
   misread, so everything passed. Then fixed only the return (`len - count`) and left `nums` wrong. `i` already IS `k`.
 - **No assert on `nums[:k]`**: the asserts checked only `k`, so a correct `k` with garbage in `nums` passed. Always assert
   `sorted(nums[:k]) == expected` too.
+- **Deduping with a `set`, then writing it back** (`nums[:len(seen)] = seen`, LC 26 cold re-solve 2026-10-12). It's not just
+  O(n) extra space, it's WRONG: a set has no order. `[-1, 0, 0, 1]` came back as `[0, 1, -1]`. The tests missed it because
+  they asserted only on `k`, and two of the inputs weren't even sorted.
+- **A redundant counter beside `i`** (27 on 2026-10-11, then 26 on 2026-10-12): `i + 1` already IS `k` on 26 (`i` on 27).
