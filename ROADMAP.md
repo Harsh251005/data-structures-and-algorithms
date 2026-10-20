@@ -1,7 +1,7 @@
 # DSA Roadmap: Zero → Interview Ready
 
 **Learner:** Harsh · **Language:** Python 3.14 · **Editor:** PyCharm · **Started:** 2026-10-04
-**Pace:** ~2 h/day, 6 days/week · **Length:** set by your pace. The dashboard's ROADMAP section shows live estimates (next unit, phase end, the 🎯 goal units) from your last 7 days
+**Pace:** ~45 min on weekdays, one ~90 min weekend session (changed from 2 h/day on 2026-10-20) · **Length:** set by your pace. The dashboard's ROADMAP section shows live estimates (next unit, phase end, the 🎯 goal units) from your last 7 days
 
 **Scope:** DSA only. The target is applied engineering roles, where the DSA round is the gate; ML theory, system
 design and behavioural prep are outside this folder.
@@ -18,8 +18,10 @@ design and behavioural prep are outside this folder.
 
 ### Units, not calendar weeks (2026-10-06)
 The curriculum below is split into **units** (numbered like the old weeks). A unit ends when its problem list is done, whether that takes 3 days or 9. `python dsa.py next` sets up the next problem in the list, and the next unit starts by itself when the current one is finished.
-- **Daily target:** at least 2 new problems plus all due re-solves. Doing more pulls the estimated dates forward. It does **not** bank days off, because the streak is about showing up.
-- **Re-solve cap:** if 4 or more re-solves are due at the start of a day, that day's target drops to 1 new problem, so the backlog can't snowball.
+- **Daily target (2026-10-20):** 1 new problem, always first. Doing more pulls the estimated dates forward. It does **not** bank days off, because the streak is about showing up.
+- **Re-solves are capped at 1 a day and come after the new problem**, only if time is left. They never block the target.
+- **Retire on a clean re-solve:** a cold re-solve with 0 hints inside the hint mark (E 15 / M 25 / H 40 min) takes the problem out of the queue for good (`dsa.py resolve <pid> --mins <n> --hints 0`). `dsa.py retire <pid>` does it by hand.
+- **Same pattern, new problem:** instead of re-solving a problem a third time, solve an unseen problem on the same pattern (LC 80 carries 26/27). Review and new learning in one go.
 - **Quality gate:** if a unit averages 3 or more hints per problem, it isn't done until 2 extra reinforcement problems (same pattern) are solved.
 - A problem belongs to the first unit that lists it. Later mentions (206 in Unit 8, 509 in Unit 20, 547 in Unit 18) are re-solves.
 
@@ -38,7 +40,7 @@ You'll write every line of code yourself. My role is the senior engineer sitting
 | 3. **Build it** | You write the core template from scratch (binary search, BFS…) and it goes into `templates/` | You |
 | 4. **Ladder** | Problems in order of difficulty: Easy → Medium → Medium+ → Hard | You |
 | 5. **Review** | I review your code the way I would a PR: correctness, edge cases, complexity, naming, cleaner alternatives | Me |
-| 6. **Re-solve** | The same problems come back on Day 3, 7 and 21 (spaced repetition). If you saw the solution, it also comes back the next day | You |
+| 6. **Re-solve** | Problems you struggled with come back on Day 3, 7 and 21 (spaced repetition), one a day at most. A clean cold re-solve retires the problem | You |
 
 ### The hint ladder
 Hints come in this order:
@@ -96,19 +98,21 @@ promotion review only if both are passed.
 At the end of each phase you get a **timed assessment**: 3 unseen problems in 90 minutes, with me as the interviewer. You don't see the problems in advance. Pass 2 of 3 to get promoted. Fail, and you get a targeted 3-day revision sprint, then a retry.
 
 ### Streak rules
-- **Minimum viable day:** on a bad day, **one re-solve or one easy problem (about 20 minutes)** keeps the streak alive. Showing up counts for more than the score.
+- **Minimum viable day:** on a bad day, **one new easy problem (about 20 minutes)** keeps the streak alive. Showing up counts for more than the score.
 - **Never miss twice.** Missing one day is life. Missing two days in a row is the start of quitting.
 - **Friday Gauntlet:** 2 cold re-solves of the week's problems, no hints, solution mark only. Clearing it is logged with `dsa.py event mock` (+40 XP). The dashboard shows it Friday to Sunday until it's done.
 - **Sunday** is pattern-card review, or rest if you need it.
 - **Tests gate:** `dsa.py log` refuses a problem until the file has at least 3 tests you wrote yourself. Writing test cases is graded in interviews.
 
-### Daily ritual (2 hours)
+### Daily ritual (~45 min on weekdays, changed 2026-10-20)
 | Time | Block |
 |---|---|
-| 10 min | **Warm-up**: one spaced re-solve from the due queue |
-| 30 min | **Learn**: new concept or pattern (lesson + hand trace) |
-| 70 min | **Solve**: 2–3 ladder problems |
-| 10 min | **Log**: commit to git, update tracker, one line in your journal about what tricked you |
+| 2 min | **Warm-up**: one trap question from a pattern card you've covered |
+| 30–35 min | **Solve**: 1 new problem, timeboxed (a short lesson first when it opens a new pattern) |
+| 5 min | **Log**: tests, review, I log, commit and push |
+| leftover | **Optional**: 1 re-solve, only if time is left |
+
+**Weekend session (~90 min, once a week):** the Friday Gauntlet when due, plus 1 harder problem.
 
 Each session in this folder, I open with: **Day N · streak · XP · today's task.** You don't have to remember where we were.
 

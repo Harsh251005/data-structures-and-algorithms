@@ -5,7 +5,10 @@ DSA Forge: your daily DSA progress tracker.
     python dsa.py                                   dashboard
     python dsa.py log 121 E --mins 14 --hints 0     log a solved problem
     python dsa.py log 121 E --hints 3 --viewed      solution viewed: re-solve tomorrow, then +3/+7/+21d
-    python dsa.py resolve 121                       log a spaced re-solve (resolve/ file needs 3 tests)
+    python dsa.py resolve 121 --mins 9 --hints 0    log a spaced re-solve (resolve/ file needs 3 tests);
+                                                    0 hints and inside the hint mark retires the problem
+    python dsa.py retire 26 --reason "covered by LC 80"
+                                                    drop a problem from the re-solve queue for good
     python dsa.py event mock | promotion            log a mock / passed promotion review
     python dsa.py next                              set up the next problem of the current unit
     python dsa.py new 121 "Best Time to Buy and Sell Stock" E
@@ -14,8 +17,8 @@ DSA Forge: your daily DSA progress tracker.
                                                     add a reinforcement problem to the current unit
     python dsa.py journal "forgot the empty-array case"
     python dsa.py unit [next]                       show the current unit (it advances by itself)
-    python dsa.py target [n]                        show / set the daily target (default 2 new + due re-solves;
-                                                    1 new on days that start with 4+ re-solves due)
+    python dsa.py target [n]                        show / set the daily target (default 1 new problem first;
+                                                    then at most 1 re-solve, optional)
     python dsa.py check 121                         count your own tests (log and resolve need 3;
                                                     checks resolve/ first when a re-solve is open)
     python dsa.py undo                              remove the last log entry
@@ -53,7 +56,7 @@ XP_EVENT = {"mock": 40, "promotion": 100}
 RESOLVE_AFTER_DAYS = (3, 7, 21)
 VIEWED_RESOLVE_AFTER_DAYS = (1, 3, 7, 21)  # solution was viewed: re-solve cold the next day first
 VIEWED_TAG = "[viewed]"
-DEFAULT_DAILY_TARGET = 2  # new problems per day, plus every re-solve that's due
+DEFAULT_DAILY_TARGET = 1  # new problems per day; re-solves are optional extras after it
 MIN_OWN_TESTS = 3  # `log` refuses until the solution file has this many tests not marked "added in review"
 
 # Levels are earned ONLY by passing promotion reviews (3 unseen problems, 90 min, pass 2 of 3), never by XP:
@@ -77,7 +80,8 @@ STREAK_MILESTONES = {3, 7, 14, 21, 30, 50, 75, 100, 150, 200, 365}
 
 GOAL_LAST_UNIT = 25  # DP ends here; Interview Mode follows, Units 26+ are the optional stretch
 
-RESOLVE_CAP = 4  # this many re-solves due at the start of a day drops that day's new target to 1
+RESOLVES_PER_DAY = 1  # re-solves offered per day, only after the new problem (2026-10-20)
+HINT_MARK = {"E": 15, "M": 25, "H": 40}  # a 0-hint re-solve inside this many minutes retires the problem
 QUALITY_HINTS = 3.0  # a unit averaging this many hints needs reinforcement problems before it counts as done
 REINFORCE_COUNT = 2  # how many reinforcement problems (`dsa.py add`) clear the quality flag
 UNLISTED_UNIT_SIZE = 7  # ETA guess for a unit without a fixed list
@@ -343,8 +347,10 @@ def schedule_for(solve: dict) -> tuple[int, ...]:
     return VIEWED_RESOLVE_AFTER_DAYS if (solve.get("note") or "").startswith(VIEWED_TAG) else RESOLVE_AFTER_DAYS
 
 
-def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
-    """Each solve schedules re-solves at +3/+7/+21 days. Returns (due, upcoming) as (date, pid, name, stage)."""
+def resolve_queue(rows: list[dict], today: date, retired: dict | None = None) -> tuple[list, list]:
+    """Each solve schedules re-solves at +3/+7/+21 days, minus retired problems.
+    Returns (due, upcoming) as (date, pid, name, stage)."""
+    retired = load_state().get("retired", {}) if retired is None else retired
     first_solve: dict[str, dict] = {}
     resolves: dict[str, int] = {}
     for r in rows:
@@ -354,6 +360,8 @@ def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
             resolves[r["pid"]] = resolves.get(r["pid"], 0) + 1
     due, upcoming = [], []
     for pid, r in first_solve.items():
+        if pid in retired:
+            continue
         stage = resolves.get(pid, 0)
         offsets = schedule_for(r)
         if stage >= len(offsets):
@@ -365,26 +373,28 @@ def resolve_queue(rows: list[dict], today: date) -> tuple[list, list]:
 
 
 def target_for(rows: list[dict], today: date, state: dict) -> int:
-    """The base target, dropped to 1 when this morning's re-solve queue was RESOLVE_CAP or more."""
-    base = state.get("daily_target", DEFAULT_DAILY_TARGET)
-    due_at_start, _ = resolve_queue([r for r in rows if r["day"] < today], today)
-    return 1 if len(due_at_start) >= RESOLVE_CAP else base
+    """New problems per day. The re-solve queue never lowers it: new work comes first (2026-10-20)."""
+    return state.get("daily_target", DEFAULT_DAILY_TARGET)
 
 
 def daily_progress(rows: list[dict], today: date, target: int) -> tuple[int, int, bool]:
-    """(new problems solved today, re-solves still due, target met). Met = target new solves + empty re-solve queue."""
+    """(new problems solved today, re-solves still on offer today, target met). Met = target new solves;
+    re-solves are optional and capped at RESOLVES_PER_DAY."""
     new_today = sum(1 for r in rows if r["kind"] == "solve" and r["day"] == today)
+    resolved_today = sum(1 for r in rows if r["kind"] == "resolve" and r["day"] == today)
     due, _ = resolve_queue(rows, today)
-    return new_today, len(due), new_today >= target and not due
+    offered = min(len(due), max(0, RESOLVES_PER_DAY - resolved_today))
+    return new_today, offered, new_today >= target
 
 
 def target_line(rows: list[dict], today: date, target: int) -> str:
-    new_today, due_left, met = daily_progress(rows, today, target)
+    new_today, offered, met = daily_progress(rows, today, target)
     if met:
-        return c("🎯 Daily target hit. ", BOLD, GREEN) + c("Anything more is bonus. Stopping here is a win too.", GREEN)
-    parts = [f"{min(new_today, target)}/{target} new"]
-    if due_left:
-        parts.append(f"{due_left} re-solve{'s' if due_left != 1 else ''} due")
+        extra = c(f"  Optional: {offered} re-solve if you have time.", GREY) if offered else ""
+        return c("🎯 Daily target hit. ", BOLD, GREEN) + c("Stopping here is a win.", GREEN) + extra
+    parts = [f"{min(new_today, target)}/{target} new first"]
+    if offered:
+        parts.append(f"then {offered} re-solve (optional)")
     return c("🎯 Today's target: ", BOLD, GOLD) + c("  ·  ".join(parts), CREAM)
 
 
@@ -523,7 +533,7 @@ def dashboard() -> None:
     if at_risk:
         print("   " + c("⚠  You missed yesterday. Miss today and the streak resets. Do one problem.", BOLD, RED))
     elif not done_today:
-        print("   " + c("Minimum viable day: one re-solve or one easy problem keeps it alive.", GREY))
+        print("   " + c("Minimum viable day: one new easy problem keeps it alive.", GREY))
     print()
 
     # Today's target
@@ -531,8 +541,6 @@ def dashboard() -> None:
     new_today, _, met = daily_progress(rows, today, target)
     print("  " + rule("today's target"))
     print(f"   {bar(min(1.0, new_today / target), width=20)}  " + target_line(rows, today, target))
-    if target < state.get("daily_target", DEFAULT_DAILY_TARGET):
-        print("   " + c(f"Re-solve heavy day ({RESOLVE_CAP}+ due this morning): 1 new problem today.", GREY))
     gauntlet = gauntlet_line(rows, today)
     if gauntlet:
         print("   " + gauntlet)
@@ -586,6 +594,7 @@ def dashboard() -> None:
     # Re-solve queue
     print("  " + rule("re-solve queue"))
     if due:
+        print("   " + c(f"Only after the new problem, max {RESOLVES_PER_DAY}/day. Oldest first.", GREY))
         totals = {r["pid"]: len(schedule_for(r)) for r in rows if r["kind"] == "solve"}
         for when, pid, name, stage in due[:6]:
             late = (today - when).days
@@ -681,13 +690,34 @@ def cmd_resolve(args) -> None:
                    "Write the missing ones yourself; cases marked 'added in review' don't count.", GOLD))
     done = sum(1 for r in rows if r["kind"] == "resolve" and r["pid"] == pid)
     append_log({"date": date.today().isoformat(), "kind": "resolve", "pid": pid, "name": solve["name"],
-                "diff": solve["diff"], "xp": XP_RESOLVE, "mins": args.mins or "", "note": args.note or ""})
+                "diff": solve["diff"], "hints": args.hints, "xp": XP_RESOLVE, "mins": args.mins or "",
+                "note": args.note or ""})
     print()
     total = len(schedule_for(solve))
     stage = min(done + 1, total)
+    clean = args.hints == 0 and args.mins is not None and args.mins <= HINT_MARK[solve["diff"]]
+    if clean:
+        retire(pid, f"clean cold re-solve {date.today().isoformat()} ({args.mins} min, 0 hints)")
     print(f"   {c('↻', BOLD, SAFFRON)} LC {pid} {solve['name']} re-solved  {c(f'round {stage}/{total}', GREY)}"
-          + (c("  · locked in for good", GREEN) if done + 1 == total else ""))
+          + (c("  · clean and fast: retired for good", GREEN) if clean
+             else c("  · locked in for good", GREEN) if done + 1 == total else ""))
     celebrate(rows, XP_RESOLVE, date.today())
+
+
+def retire(pid: str, reason: str) -> None:
+    state = load_state()
+    state.setdefault("retired", {})[pid] = reason
+    save_state(state)
+    write_tracker()
+
+
+def cmd_retire(args) -> None:
+    rows = load_log()
+    pid = str(args.pid)
+    if not any(r["kind"] == "solve" and r["pid"] == pid for r in rows):
+        sys.exit(c(f"LC {pid} was never logged as solved.", GOLD))
+    retire(pid, args.reason or "retired by hand")
+    print(f"   {c('✔', BOLD, GREEN)} LC {pid} out of the re-solve queue  {c(args.reason or '', GREY)}")
 
 
 def cmd_event(args) -> None:
@@ -718,6 +748,11 @@ def cmd_undo(_args) -> None:
     if not rows:
         sys.exit(c("Nothing to undo.", GREY))
     last = rows.pop()
+    if last["kind"] == "resolve":  # a clean re-solve retired it; undoing the re-solve brings it back
+        state = load_state()
+        if state.get("retired", {}).get(last["pid"], "").startswith("clean cold re-solve " + last["date"]):
+            del state["retired"][last["pid"]]
+            save_state(state)
     rewrite_log(rows)
     write_tracker()
     print(c(f"   removed: {last['date']} {last['kind']} {last['pid']} {last['name']} ({last['xp']} XP)", GREY))
@@ -760,7 +795,8 @@ def cmd_target(args) -> None:
     if args.n:
         state["daily_target"] = max(1, args.n)
         save_state(state)
-    print(f"   🎯 Daily target: {c(str(state.get('daily_target', DEFAULT_DAILY_TARGET)), BOLD, GOLD)} new problems + all due re-solves")
+    print(f"   🎯 Daily target: {c(str(state.get('daily_target', DEFAULT_DAILY_TARGET)), BOLD, GOLD)} new problem(s) first, "
+          f"then up to {RESOLVES_PER_DAY} re-solve (optional)")
 
 
 def slugify(text: str) -> str:
@@ -838,6 +874,7 @@ TRACKER_COLUMNS = ["#", "Date", "LC #", "Problem", "Difficulty", "Topic", "Patte
 def write_tracker(rows: list[dict] | None = None) -> None:
     """One row per problem, rebuilt from log.csv and the solution docstrings. Never edit the CSV by hand."""
     rows = load_log() if rows is None else rows
+    retired = load_state().get("retired", {})
     resolves: dict[str, list[dict]] = {}
     for r in rows:
         if r["kind"] == "resolve":
@@ -850,13 +887,15 @@ def write_tracker(rows: list[dict] | None = None) -> None:
         done = len(resolves.get(r["pid"], []))
         offsets = schedule_for(r)  # viewed solutions run +1/+3/+7/+21
         nxt = (r["day"] + timedelta(days=offsets[done])).isoformat() if done < len(offsets) else ""
+        if r["pid"] in retired:
+            nxt = f"retired: {retired[r['pid']]}"
         out.append({
             "#": n, "Date": r["date"], "LC #": r["pid"], "Problem": r["name"],
             "Difficulty": {"E": "Easy", "M": "Medium", "H": "Hard"}.get(r["diff"], r["diff"]),
             "Topic": topic_for(path) if path else "", "Pattern": f.get("Pattern", ""),
             "Minutes": r["mins"], "Hints": r["hints"], "Clean solve": "Yes" if r["hints"] in ("0", 0) else "No",
             "XP": r["xp"], "Re-solves done": f"{done} of {len(offsets)}", "Next re-solve": nxt,
-            "Mastered": "Yes" if done >= len(offsets) else "No",
+            "Mastered": "Yes" if done >= len(offsets) or r["pid"] in retired else "No",
             "Key insight": f.get("Key insight", ""), "LeetCode": f.get("Link", ""),
             "Solution": f"{REPO_URL}/blob/main/{path.relative_to(ROOT).as_posix()}" if path else "",
         })
@@ -955,8 +994,14 @@ def main() -> None:
     p = sub.add_parser("resolve", help="log a spaced re-solve")
     p.add_argument("pid")
     p.add_argument("--mins", type=int)
+    p.add_argument("--hints", type=int, default=0, help="hints used (0 within the hint mark retires it)")
     p.add_argument("--note")
     p.set_defaults(fn=cmd_resolve)
+
+    p = sub.add_parser("retire", help="drop a problem from the re-solve queue for good")
+    p.add_argument("pid")
+    p.add_argument("--reason")
+    p.set_defaults(fn=cmd_retire)
 
     p = sub.add_parser("event", help="log a mock interview or passed promotion review")
     p.add_argument("kind", choices=list(XP_EVENT))

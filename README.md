@@ -19,12 +19,13 @@ python dsa.py new 1 "Two Sum" E                 # create a solution file (in the
 python dsa.py add 1752 "Check if Array Is Sorted and Rotated" E   # reinforcement problem for this unit
 python dsa.py log 1 E --mins 18 --hints 0       # log a solve
 python dsa.py log 1 E --hints 3 --viewed       # solution viewed: re-solve tomorrow, then days 3, 7, 21
-python dsa.py resolve 1                         # spaced re-solve (days 3, 7, 21); resolve/ file needs 3 tests
+python dsa.py resolve 1 --mins 9 --hints 0      # spaced re-solve; resolve/ file needs 3 tests; clean + fast retires it
+python dsa.py retire 26 --reason "covered by 80" # drop a problem from the re-solve queue
 python dsa.py event mock                        # Friday Gauntlet cleared
 python dsa.py check 1                           # count my own tests (log and resolve need 3)
 python dsa.py journal "forgot the empty input"  # one-line journal
 python dsa.py unit                              # current unit (advances by itself when its list is done)
-python dsa.py target 3                          # change the daily target (default: 2 new + due re-solves)
+python dsa.py target 2                          # change the daily target (default: 1 new first, then max 1 re-solve)
 ```
 
 Standard library only, so there's nothing to install.

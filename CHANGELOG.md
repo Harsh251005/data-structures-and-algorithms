@@ -2,6 +2,12 @@
 
 Every change to the system (tracker, roadmap, rules) gets a line here, newest first.
 
+## 2026-10-20
+- **New problem first, every day.** The daily target is 1 new problem; re-solves are optional extras after it, max 1 a day. The old rule (2 new + all due re-solves, dropping to 1 new when 4+ were due) let re-solves crowd out new work: no new problem from 10-08 to 10-12.
+- **Clean re-solves retire a problem.** 0 hints inside the hint mark takes it out of the queue for good; `dsa.py retire` does it by hand. Retired 121, 88, 217, 344 (clean cold re-solves) and 26, 27 (carried by LC 80).
+- **LC 80 (M) added to Unit 2** as a same-pattern reinforcement problem instead of more 26/27 re-solves.
+- **Session length is ~45 min on weekdays**, plus one ~90 min weekend session (was 2 h/day).
+
 ## 2026-10-10
 - **`.codex/` is ignored.** Codex's local folder stays out of the public repo.
 
